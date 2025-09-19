@@ -1,0 +1,740 @@
+// air_hockey_game.fab — core game logic
+// Author: Brandon Thacker
+// License: MIT
+
+// ============================================================================
+// VARS
+// ============================================================================
+vars /air_hockey_game
+    U game_paused = false
+    PhysicsObject[3] game_objects
+    U player1_score = 0
+    U player2_score = 0
+    Vector2U last_hit_puck_position = Vector2U(0, 0)
+    U last_hit_puck_counter = 0
+    U last_hit_puck_player = NONE
+    U friction_counter = 0
+
+
+// game settings get preserved when we swap modes
+vars /game_settings
+    U ai_disabled = 1 // 0 no, 1 yes
+    Bool attract_mode = false // 0 no, 1 yes
+    U puck_start_side
+    U theme = THEME_ARCADE
+    U[3] p1_color 
+    U[3] p2_color
+    [25] game_palette
+
+
+// ============================================================================
+// INIT
+// ============================================================================
+fn init_theme()
+    ppu_reset_addr($2000)
+    switch theme
+        case THEME_ARCADE
+            ppu_upload_rlz(@gamefield_arcade)
+            fade_in_black(FADE_PERIOD, @gamefield_palette_arcade)
+            break
+        case THEME_SPACE
+            init_space_bg()
+            ppu_upload_rlz(@gamefield_space)
+            fade_in_black(FADE_PERIOD, @gamefield_palette_space)
+            break
+        case THEME_RETRO
+            ppu_upload_rlz(@gamefield_retro)
+            fade_in_black(FADE_PERIOD, @gamefield_palette_retro)
+            break
+    change_object_pallete(false)
+
+
+fn init_game_objects()
+    game_objects[PLAYER_1] = PhysicsObject(MALLET_P1_START, VEL_ZERO, 0, @mallet_metasprite_p1, 0)
+    game_objects[PLAYER_2] = PhysicsObject(MALLET_P2_START, VEL_ZERO, 0, @mallet_metasprite_p2, 0)
+    game_objects[PUCK] = PhysicsObject(PUCK_START_P1, VEL_ZERO, 0, @puck_metasprite, 0)
+
+
+fn setup_rink(U side)
+    game_objects[PUCK].vel = VEL_ZERO
+    game_objects[PLAYER_1].pos = MALLET_P1_START
+    game_objects[PLAYER_2].pos = MALLET_P2_START
+    U random_x = rand_range(
+        RINK_DIMENSIONS.left_x + 8, 
+        RINK_DIMENSIONS.right_x - 8
+        )
+
+    switch side
+        case PLAYER_1 // puck on player 2 side, mallets reset
+            if !ai_disabled || attract_mode
+                ai_can_start_counter = rand_range(
+                    ONE_SECOND_FRAMES, 
+                    THREE_SECONDS_FRAMES
+                    )
+            game_objects[PUCK].pos = Vector2UF(random_x, PUCK_START_P2.y)
+            break
+        case PLAYER_2  // puck on player 1 side
+            game_objects[PUCK].pos = Vector2UF(random_x, PUCK_START_P1.y)
+            break
+
+
+fn change_object_pallete(Bool replay)
+    if replay
+        palette[12] = COLOR_PALETTES[18]
+        palette[13] = COLOR_PALETTES[19]
+        palette[14] = COLOR_PALETTES[20]
+        palette[15] = COLOR_PALETTES[18]
+        palette[16] = COLOR_PALETTES[19]
+        palette[17] = COLOR_PALETTES[20]
+        palette[21] = COLOR_PALETTES[18]
+        palette[22] = COLOR_PALETTES[19]
+        palette[23] = COLOR_PALETTES[20]
+        return
+
+    U ind_1 = 0
+    U ind_2 = 0
+    U ind_3 = 0
+
+    switch theme
+        case THEME_ARCADE 
+            load_palette(@gamefield_palette_arcade)
+            ind_1 = 0
+            ind_2 = 1
+            ind_3 = 2
+            break
+        case THEME_SPACE
+            load_palette(@gamefield_palette_space)
+            ind_1 = 0
+            ind_2 = 1
+            ind_3 = 2
+            break
+        case THEME_RETRO // we use the primary color only
+            load_palette(@gamefield_palette_retro)
+            ind_1 = 0
+            ind_2 = 0
+            ind_3 = 0
+            break
+    palette[12] = p1_color[ind_1]
+    palette[13] = p1_color[ind_2]
+    palette[14] = p1_color[ind_3]
+    palette[15] = p2_color[ind_1]
+    palette[16] = p2_color[ind_2]
+    palette[17] = p2_color[ind_3]
+
+// ============================================================================
+// MALLET LOGIC
+// ============================================================================
+fn handle_mallet_input(U idx)
+    game_objects[idx].vel = VEL_ZERO
+    game_objects[idx].moving = 0
+
+    if game_objects[idx].cooldown_timer > 0
+        game_objects[idx].cooldown_timer -= 1
+        return
+
+    UF mallet_speed = MALLET_SPEED_NORMAL
+    if pads[idx].held & BUTTON_B
+        mallet_speed = MALLET_SPEED_BOOST
+        game_objects[idx].moving |= BOOSTING
+    else
+        game_objects[idx].moving &= ~BOOSTING
+
+    if (
+        pads[idx].held & BUTTON_LEFT 
+        && !is_colliding_rink(MALLET_RADIUS, idx, MOVING_LEFT)
+    )
+        game_objects[idx].vel.x -= mallet_speed
+        game_objects[idx].moving |= MOVING_LEFT
+    
+    if (
+        pads[idx].held & BUTTON_RIGHT 
+        && !is_colliding_rink(MALLET_RADIUS, idx, MOVING_RIGHT)
+    )
+        game_objects[idx].vel.x += mallet_speed
+        game_objects[idx].moving |= MOVING_RIGHT
+    
+    if idx == PLAYER_1
+        if (
+            pads[idx].held & BUTTON_UP 
+            && !is_colliding_rink(MALLET_RADIUS, idx, MOVING_UP_CENTER)
+        )
+            game_objects[idx].vel.y -= mallet_speed
+            game_objects[idx].moving |= MOVING_UP
+
+        if (
+            pads[idx].held & BUTTON_DOWN 
+            && !is_colliding_rink(MALLET_RADIUS, idx, MOVING_DOWN)
+        )
+            game_objects[idx].vel.y += mallet_speed
+            game_objects[idx].moving |= MOVING_DOWN
+
+    if idx == PLAYER_2
+        if (
+            pads[idx].held & BUTTON_DOWN 
+            && !is_colliding_rink(MALLET_RADIUS, idx, MOVING_DOWN_CENTER)
+        )
+            game_objects[idx].vel.y += mallet_speed
+            game_objects[idx].moving |= MOVING_DOWN
+
+        if (
+            pads[idx].held & BUTTON_UP 
+            && !is_colliding_rink(MALLET_RADIUS, idx, MOVING_UP)
+        )
+            game_objects[idx].vel.y -= mallet_speed
+            game_objects[idx].moving |= MOVING_UP
+    
+    if game_objects[idx].vel.x == 0 && game_objects[idx].vel.y == 0
+        game_objects[idx].moving = 0
+        
+
+
+// ============================================================================
+// COLLISIONS
+// ============================================================================
+fn collide_puck_rink()
+    if !game_objects[PUCK].moving
+        return
+    
+    if (
+        game_objects[PUCK].moving & MOVING_LEFT 
+        && is_colliding_rink(PUCK_RADIUS, PUCK, MOVING_LEFT)
+    )
+        game_objects[PUCK].pos.x = RINK_DIMENSIONS.left_x + PUCK_RADIUS + 1
+        game_objects[PUCK].vel.x = -game_objects[PUCK].vel.x
+        puf.play_sfx(3)
+    
+    if (
+        game_objects[PUCK].moving & MOVING_RIGHT 
+        && is_colliding_rink(PUCK_RADIUS, PUCK, MOVING_RIGHT)
+    )
+        game_objects[PUCK].pos.x = RINK_DIMENSIONS.right_x - PUCK_RADIUS - 1
+        game_objects[PUCK].vel.x = -game_objects[PUCK].vel.x
+        puf.play_sfx(3)
+
+    if game_objects[PUCK].moving & MOVING_UP
+        // Only skip wall collision if puck is actually entering the goal
+        if (
+            game_objects[PUCK].pos.x.a > RINK_DIMENSIONS.left_net_x && 
+            game_objects[PUCK].pos.x.a < RINK_DIMENSIONS.right_net_x &&
+            game_objects[PUCK].pos.y.a <= RINK_DIMENSIONS.top_y + PUCK_RADIUS
+        )
+            return
+        if is_colliding_rink(PUCK_RADIUS, PUCK, MOVING_UP)
+            game_objects[PUCK].pos.y = RINK_DIMENSIONS.top_y + PUCK_RADIUS + 1
+            game_objects[PUCK].vel.y = -game_objects[PUCK].vel.y
+            puf.play_sfx(3)
+
+
+    if game_objects[PUCK].moving & MOVING_DOWN
+        // Only skip wall collision if puck is actually entering the goal
+        if (
+            game_objects[PUCK].pos.x.a > RINK_DIMENSIONS.left_net_x && 
+            game_objects[PUCK].pos.x.a < RINK_DIMENSIONS.right_net_x &&
+            game_objects[PUCK].pos.y.a >= RINK_DIMENSIONS.bottom_y - PUCK_RADIUS
+        )
+            return
+        if is_colliding_rink(PUCK_RADIUS, PUCK, MOVING_DOWN)
+            game_objects[PUCK].pos.y = RINK_DIMENSIONS.bottom_y - PUCK_RADIUS - 1
+            game_objects[PUCK].vel.y = -game_objects[PUCK].vel.y
+            puf.play_sfx(3)
+
+
+fn is_colliding_rink(U rad, U object_idx, U direction) Bool
+    switch direction
+        case MOVING_LEFT
+            if game_objects[object_idx].pos.x.a - rad < RINK_DIMENSIONS.left_x
+                return true
+            break
+        case MOVING_RIGHT
+            if game_objects[object_idx].pos.x.a + rad > RINK_DIMENSIONS.right_x
+                return true
+            break
+        case MOVING_UP
+            if game_objects[object_idx].pos.y.a - rad < RINK_DIMENSIONS.top_y
+                return true
+            break
+        case MOVING_DOWN
+            if game_objects[object_idx].pos.y.a + rad > RINK_DIMENSIONS.bottom_y
+                return true
+            break
+        case MOVING_UP_CENTER
+            if game_objects[object_idx].pos.y.a - rad < RINK_DIMENSIONS.center_y
+                return true
+            break
+        case MOVING_DOWN_CENTER
+            if game_objects[object_idx].pos.y.a + rad > RINK_DIMENSIONS.center_y
+                return true
+            break
+    return false
+
+
+fn collide_puck_mallet(U idx)
+    S dx = S(game_objects[PUCK].pos.x.a - game_objects[idx].pos.x.a)
+    S dy = S(game_objects[PUCK].pos.y.a - game_objects[idx].pos.y.a)
+
+    if abs(dx) >= MALLET_DIAMETER || abs(dy) >= MALLET_DIAMETER
+        return
+
+    UU distance_squared = UU(dx*dx + dy*dy)
+    if distance_squared >= COLLISION_THRESHOLD
+        return
+
+    if idx == PLAYER_2 && !ai_disabled
+        ai_hit_counter += 1
+    
+
+    game_objects[idx].cooldown_timer = MALLET_COOLDOWN_TIMER
+
+    // normal vector
+    SF nx = SF(dx) >> 3 // Divide by approx the diameter
+    SF ny = SF(dy) >> 3
+
+    // calculate dot products
+    SF a_dot = SF(nx*game_objects[idx].vel.x + ny*game_objects[idx].vel.y)
+    SF b_dot = SF(nx*game_objects[PUCK].vel.x + ny*game_objects[PUCK].vel.y)
+    SF impulse = 0.0
+    if game_objects[idx].moving & BOOSTING
+        impulse = SF((a_dot - b_dot) * 2.0)
+    else
+        impulse = a_dot - b_dot
+
+    // scale the normal by the calculated amount
+    SF wx = SF(impulse*nx)
+    SF wy = SF(impulse*ny)
+
+    game_objects[PUCK].vel.x += wx 
+    game_objects[PUCK].vel.y += wy
+
+    // simple shift so we aren't colliding with the mallet
+    game_objects[PUCK].pos.x += nx << 1
+    game_objects[PUCK].pos.y += ny << 1
+
+
+    U total_velocity = abs(game_objects[PUCK].vel.x.a) + abs(game_objects[PUCK].vel.y.a)
+    total_puck_velocity = total_velocity
+    if total_velocity >= 3
+        puf.play_sfx(2)
+    else if total_velocity >= 1.5
+        puf.play_sfx(1)
+    else
+        puf.play_sfx(0)
+
+    if idx != last_hit_puck_player
+        last_hit_puck_player = idx
+        last_hit_puck_counter = 0
+        last_hit_puck_position = Vector2U(
+            game_objects[PUCK].pos.x.a, game_objects[PUCK].pos.y.a
+        )
+    else
+        last_hit_puck_counter += 1
+
+
+// ============================================================================
+// OBJECT MOVEMENT, puck and mallets
+// ============================================================================
+fn apply_object_movement(U idx)
+    game_objects[idx].vel.x = clamp_sf(game_objects[idx].vel.x, -1.0, 1.0)
+    game_objects[idx].vel.y = clamp_sf(game_objects[idx].vel.y, -1.0, 1.0)
+
+    if game_objects[idx].pos.x != 0 || game_objects[idx].pos.y != 0
+        if game_objects[idx].vel.x > 0
+            game_objects[idx].moving |= MOVING_RIGHT
+        if game_objects[idx].vel.x < 0
+            game_objects[idx].moving |= MOVING_LEFT
+        if game_objects[idx].vel.y > 0
+            game_objects[idx].moving |= MOVING_DOWN
+        if game_objects[idx].vel.y < 0
+            game_objects[idx].moving |= MOVING_UP
+    else
+        game_objects[idx].moving = 0
+
+    game_objects[idx].pos.x += game_objects[idx].vel.x
+    game_objects[idx].pos.y += game_objects[idx].vel.y
+
+// friction is applied only once per frame
+fn apply_friction_puck()
+    game_objects[PUCK].vel.x *= FRICTION
+    game_objects[PUCK].vel.y *= FRICTION
+
+
+// ============================================================================
+// GAME LOOP FUNCTIONS
+// ============================================================================
+// returns number of player who scored
+fn evaluate_player_scored() U
+    if game_objects[PUCK].pos.y <= RINK_DIMENSIONS.top_y
+        player1_score += 1
+        return PLAYER_1
+    if game_objects[PUCK].pos.y >= RINK_DIMENSIONS.bottom_y
+        player2_score += 1
+        return PLAYER_2
+    return NONE
+
+
+// returns number of player who won
+fn evaluate_game_over() U
+    if player1_score >= SCORE_TO_WIN
+        return PLAYER_1
+    else if player2_score >= SCORE_TO_WIN
+        return PLAYER_2 
+    return NONE
+
+
+fn evaluate_pause() Bool
+    if pads[0].pressed & BUTTON_START || pads[1].pressed & BUTTON_START
+        game_paused = !game_paused
+    
+    if game_paused
+        if pads[0].pressed & BUTTON_A
+            // reset game
+            fade_out_black(FADE_PERIOD)
+            hide_oam(0)
+            goto mode main()
+            :preserves
+
+
+// if the puck gets stuck in a corner etc, we violate for trapping
+fn evaluate_stuck_puck() U
+    if last_hit_puck_counter < STUCK_PUCK_HIT_MAX
+        return NONE
+
+    S dx = S(game_objects[PUCK].pos.x.a - last_hit_puck_position.x)
+    S dy = S(game_objects[PUCK].pos.y.a - last_hit_puck_position.y)
+
+    if abs(dx) > STUCK_PUCK_HIT_DISTANCE || abs(dy) > STUCK_PUCK_HIT_DISTANCE
+        last_hit_puck_counter = 0
+        last_hit_puck_player = NONE
+    else
+        U player_stuck = last_hit_puck_player
+        last_hit_puck_player = NONE
+        last_hit_puck_counter = 0
+        return player_stuck
+    return NONE
+
+
+fn show_game_over(U winner)
+    puf.play_track(puf_track_gameover)
+    switch winner
+        case 1
+            // player 1 wins
+            break
+        case 2
+            // player 2 wins
+            break
+    while true
+        update_pads()
+        update_sprites_notify(@game_over_metasprite, 0)
+        if pads[0].pressed & BUTTON_B
+            fade_out_black(FADE_PERIOD)
+            hide_oam(0)
+            goto mode air_hockey_game()
+            :preserves /game_settings
+        if pads[0].pressed & BUTTON_A
+            fade_out_black(FADE_PERIOD)
+            hide_oam(0)
+            goto mode main()
+            :preserves
+        nmi
+
+fn evaluate_attract_exit()
+    if (
+        pads[0].pressed 
+        || pads[1].pressed 
+        || player1_score >= 4 
+        || player2_score >= 4
+    )
+        fade_out_black(FADE_PERIOD)
+        hide_oam(0)
+        goto mode main()
+        :preserves
+
+// ============================================================================
+// SPECIAL EFFECTS 
+// ============================================================================
+// will cycle emphasis bits on the screen for 3 seconds
+// this creates a cool color flash effect during scoring
+// also shows a replay of the goal!
+fn effect_scored_goal()
+    change_object_pallete(true)
+    U current_bit_emphasis = 0
+    U flicker_step = 20
+    for U i = 0; i < TWO_SECONDS_FRAMES; i += 1 //loop should match replay system
+        if i == flicker_step
+            if current_bit_emphasis < len(EMPHASIS_BITS) - 1
+                current_bit_emphasis += 1
+            else
+                current_bit_emphasis = 0
+            flicker_step += 20
+        fence
+        {PPUMASK}(EMPHASIS_BITS[current_bit_emphasis] | PPUMASK_ON)
+        fence
+        U existing_o = show_replay(i)
+        update_sprites_notify(@goal_metasprite, existing_o)
+        nmi
+    change_object_pallete(false)
+
+
+// darkens the screen when paused
+fn effect_paused()
+    fence
+    {PPUMASK}(
+        PPUMASK_EMPHASIZE_R | 
+        PPUMASK_EMPHASIZE_G | 
+        PPUMASK_EMPHASIZE_B | 
+        PPUMASK_ON
+        )
+    fence
+
+
+// ============================================================================
+// SPRITE UPDATES
+// ============================================================================
+// order that sprites are pushed to OAM determines draw order
+// sprites are always shifted down by 1 pixel (NES quirk), so shift them up
+fn update_sprites_gameplay()
+    U o = 0
+    o = push_oam_metasprite(
+        o, 
+        TOP_NET_POS.x, 
+        TOP_NET_POS.y, 
+        @top_net_metasprite
+        )
+    o = push_oam_metasprite(
+        o, 
+        BOT_NET_POS.x, 
+        BOT_NET_POS.y, 
+        @bot_net_metasprite
+        )
+    o = push_oam_metasprite(
+        o, 
+        game_objects[PUCK].pos.x.a, 
+        game_objects[PUCK].pos.y.a, 
+        game_objects[PUCK].metasprite
+        )
+    // 00 is player 1 palette
+    o = push_oam_metasprite(
+            o, 
+            game_objects[PLAYER_1].pos.x.a, 
+            game_objects[PLAYER_1].pos.y.a, 
+            game_objects[PLAYER_1].metasprite
+        )
+    // 01 is player 2 palette
+    o = push_oam_metasprite(
+            o, 
+            game_objects[PLAYER_2].pos.x.a, 
+            game_objects[PLAYER_2].pos.y.a,
+            game_objects[PLAYER_2].metasprite
+        )
+    o = push_oam(
+        o,
+            SCORE_1_POS.x,
+            SCORE_1_POS.y,
+            player1_score + NUMBER_SPRITES_START,
+            $00
+        )
+    o = push_oam(
+            o,
+            SCORE_2_POS.x,
+            SCORE_2_POS.y,
+            player2_score + NUMBER_SPRITES_START,
+            $01
+        )
+    o = push_oam(
+        o,
+            SCORE_TO_WIN_POS.x,
+            SCORE_TO_WIN_POS.y,
+            SCORE_TO_WIN + NUMBER_SPRITES_START,
+            $02
+        )
+    
+
+    if theme == THEME_SPACE // space theme
+        o = update_sprites_space_bg(o)
+
+    if theme == THEME_ARCADE
+        o = push_oam_metasprite(
+        o, 
+        128, 
+        120, 
+        @line_helper_metasprite
+        )
+
+    if o
+        hide_oam(o)
+
+
+fn update_sprites_notify(PPP/sprites metaspr, U existing_o)
+    U o = 0
+    if existing_o
+        o = existing_o
+    o = push_oam_metasprite(
+        o, 
+        NOTIFY_SPRITE_POS.x , 
+        NOTIFY_SPRITE_POS.y, 
+        metaspr
+        )
+    o = push_oam(
+        o,
+        SCORE_1_POS.x,
+        SCORE_1_POS.y,
+        player1_score + NUMBER_SPRITES_START,
+        $00
+        )
+
+    o = push_oam(
+        o,
+        SCORE_2_POS.x,
+        SCORE_2_POS.y,
+        player2_score + NUMBER_SPRITES_START,
+        $01
+        )
+    o = push_oam(
+        o,
+        SCORE_TO_WIN_POS.x,
+        SCORE_TO_WIN_POS.y,
+        SCORE_TO_WIN + NUMBER_SPRITES_START,
+        $02
+        )
+    if theme == THEME_ARCADE
+        o = push_oam_metasprite(
+        o, 
+        RINK_DIMENSIONS.center_x, 
+        RINK_DIMENSIONS.center_y, 
+        @line_helper_metasprite
+        )
+
+    if o
+        hide_oam(o)
+
+
+// ============================================================================
+// NMI / VBLANK 
+// ============================================================================
+nmi air_hockey_game_nmi()
+    ppu_upload_oam_poll_pads(0)
+    ppu_upload_palette()
+    ppu_reset_scroll(0, 0)
+
+    // play sounds
+    if puf.process(PUF_DEFAULT)
+        // we stop the game over song after it plays once
+        puf.stop(0)
+
+    if theme == THEME_SPACE // space theme
+        // we clip the space theme so planets scroll smoothly
+        {PPUMASK}(PPUMASK_ON)
+    else
+        {PPUMASK}(PPUMASK_ON | PPUMASK_NO_CLIP)
+    {PPUCTRL}(PPUCTRL_NMI_ON | PPUCTRL_BG_PT_1000)
+
+
+// ============================================================================
+// MODE air_hockey_game()
+// ============================================================================
+mode air_hockey_game()
+: nmi air_hockey_game_nmi
+    puf.init(system)
+
+    {PPUCTRL}(0)
+    {PPUMASK}(0)
+    {PPUCTRL}(PPUCTRL_NMI_ON | PPUCTRL_BG_PT_1000)
+
+    init_theme()
+    init_game_objects()
+    puck_start_side = randb(2)
+    setup_rink(puck_start_side)
+
+    // main game loop
+    while true
+        if debug_gray_line_on
+            debug_performance_gray_line(1)
+
+        update_pads()
+
+        evaluate_pause()
+        if game_paused
+            effect_paused()
+            update_sprites_notify(@paused_metasprite, 0)
+            nmi
+            continue
+
+        // debug control
+        if debug_mode
+            handle_debug_input()
+
+        U scored = evaluate_player_scored()
+        switch scored
+            case PLAYER_1 case PLAYER_2
+                puf.play_sfx(3)
+                puf.play_sfx(4)
+                effect_scored_goal()
+                setup_rink(scored)
+                break
+
+        U game_over = evaluate_game_over()
+        switch game_over
+            case PLAYER_1 case PLAYER_2
+                show_game_over(game_over)
+                continue
+
+        U stuck_puck = evaluate_stuck_puck()
+        switch stuck_puck
+            case PLAYER_1 case PLAYER_2
+                puf.play_sfx(5)
+                update_sprites_notify(@trap_metasprite, 0)
+                wait(ONE_SECOND_FRAMES)
+                setup_rink(stuck_puck)
+                break
+
+        // main physics / input update handle loop
+        if attract_mode
+            handle_drone_mallet(PLAYER_1)
+            handle_drone_mallet(PLAYER_2)
+            evaluate_attract_exit()
+
+        if !attract_mode
+            handle_mallet_input(PLAYER_1)
+            if ai_disabled
+                handle_mallet_input(PLAYER_2)
+            else
+                handle_drone_mallet(PLAYER_2)
+
+        for U pt = 0; pt < PHYSICS_TICKS; pt += 1
+            if (
+                game_objects[PLAYER_1].pos.y.a 
+                >= RINK_DIMENSIONS.center_y_p1_collision_check
+            )
+                collide_puck_mallet(PLAYER_1)
+            if (
+                game_objects[PLAYER_2].pos.y.a 
+                <= RINK_DIMENSIONS.center_y_p2_collision_check
+            )
+                collide_puck_mallet(PLAYER_2)
+            collide_puck_rink()
+            // half of the physics ticks
+            // as the mallet moves slower than the puck
+            if pt == 2 || pt == 4 // twice per frame
+                apply_object_movement(PLAYER_1)
+                apply_object_movement(PLAYER_2)
+            update_replay_system() // update this every movement tick
+            apply_object_movement(PUCK)
+
+        // we want the puck to slide, so we only apply friction every 2 frames
+        friction_counter += 1
+        if friction_counter == FRICTION_APPLY_TICKS
+            friction_counter = 0
+            apply_friction_puck()
+
+        if debug_mode
+            update_debug_vars()
+
+        update_sprites_gameplay()
+        if theme == THEME_SPACE // space theme
+            scroll_space_bg()
+
+        // turn line back off
+        if debug_gray_line_on
+            debug_performance_gray_line(0)
+        
+        // finally, nmi
+        nmi

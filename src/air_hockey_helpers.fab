@@ -1,0 +1,45 @@
+// air_hockey_helpers.fab — math helpers and nmi helper for modifying background
+// Author: Brandon Thacker
+// License: MIT
+
+// ============================================================================
+// MATH Helper FUNCTIONS
+// ============================================================================
+fn clamp_sf(SF value, SF min_val, SF max_val) SF
+    if value > max_val
+        return max_val
+    if value < min_val
+        return min_val
+    return value
+
+
+fn rand_range(U lower, U upper) U
+    if upper < lower
+        return lower
+    
+    U range = upper - lower + 1
+    if range == 0
+        return lower
+
+    ct U[8] table = U[8](%1, %11, %111, %1111, %11111, %111111, %1111111, %11111111)
+
+    U i = $FF
+    do for U v = range - 1; v; v >>= 1
+        i += 1
+    U mask = table[i]
+
+    U result
+    do while result >= range
+        result = rand() & mask
+
+    return result + lower
+
+// ============================================================================
+// NMI Helper Functions
+// ============================================================================
+fn write_vram_h(UU ppu_address, U start_index, U length, CCC/menu_data tile_data)
+    // can only write 40 or so tiles during NMI
+    ppu_reset_addr(ppu_address)
+    for U i = start_index; i < start_index + length; i += 1
+        {PPUDATA}(tile_data[i])
+    ppu_reset_scroll(0, 0)

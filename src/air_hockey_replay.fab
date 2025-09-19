@@ -1,0 +1,77 @@
+// air_hockey_replay.fab — replay system after the goal
+// Author: Brandon Thacker
+// License: MIT
+
+// ============================================================================
+// REPLAY SYSTEM
+// This system eats up quite a bit of memory, TWO_SECONDS_FRAMES * 6 bytes
+// i.e 120 * 6 = 720 bytes plus other overhead
+// we actually only update the mallet positions on physics_tick 1 and 3, so 
+// the overall data store for the replay could be much smaller for those
+// if that was implemented, you could get another 1-2 seconds out of replay
+// ============================================================================
+vars /replay_system
+    Vector2U[TWO_SECONDS_FRAMES] puck_replay_positions
+    Vector2U[TWO_SECONDS_FRAMES] mallet_1_replay_positions
+    Vector2U[TWO_SECONDS_FRAMES] mallet_2_replay_positions
+    U replay_index = 0
+
+
+fn update_replay_system()
+    puck_replay_positions[replay_index] = Vector2U(
+        game_objects[PUCK].pos.x.a, 
+        game_objects[PUCK].pos.y.a
+        )
+    mallet_1_replay_positions[replay_index] = Vector2U(
+        game_objects[PLAYER_1].pos.x.a, 
+        game_objects[PLAYER_1].pos.y.a
+        )
+    mallet_2_replay_positions[replay_index] = Vector2U(
+        game_objects[PLAYER_2].pos.x.a, 
+        game_objects[PLAYER_2].pos.y.a
+        )
+    if replay_index < TWO_SECONDS_FRAMES - 1
+        replay_index += 1
+    else
+        replay_index = 0
+
+
+fn show_replay(U current_index) U 
+    // Loop through all 180 stored positions
+    // Calculate the actual index in our circular buffer
+    U buffer_index = replay_index + current_index
+    if buffer_index >= TWO_SECONDS_FRAMES
+        buffer_index = buffer_index - TWO_SECONDS_FRAMES
+    U o = 0
+    o = push_oam_metasprite(
+        o, 
+        TOP_NET_POS.x, 
+        TOP_NET_POS.y, 
+        @top_net_metasprite
+    )
+    o = push_oam_metasprite(
+        o, 
+        BOT_NET_POS.x, 
+        BOT_NET_POS.y, 
+        @bot_net_metasprite
+    )
+    o = push_oam_metasprite(
+        o, 
+        puck_replay_positions[buffer_index].x, 
+        puck_replay_positions[buffer_index].y, 
+        game_objects[PUCK].metasprite
+    )
+    o = push_oam_metasprite(
+        o, 
+        mallet_1_replay_positions[buffer_index].x, 
+        mallet_1_replay_positions[buffer_index].y, 
+        game_objects[PLAYER_1].metasprite 
+    )
+    o = push_oam_metasprite(
+        o, 
+        mallet_2_replay_positions[buffer_index].x, 
+        mallet_2_replay_positions[buffer_index].y, 
+        game_objects[PLAYER_2].metasprite
+    )
+
+    return o

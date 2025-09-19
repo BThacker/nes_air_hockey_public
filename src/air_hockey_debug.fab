@@ -1,0 +1,69 @@
+// air_hockey_debug.fab — debug utilities helping with development
+// Author: Brandon Thacker
+// License: MIT
+
+// ============================================================================
+// VARS, some of these assist with tracking inside mesen easier
+// ============================================================================
+vars /debug
+    Bool debug_mode = false
+    U debug_toggle_performance_gray_line_counter = 0
+    U debug_reset_game_counter = 0
+    Bool debug_gray_line_on = false
+    U puck_x
+    U puck_y
+    U mallet_1_x
+    U mallet_1_y
+    U mallet_2_x
+    U mallet_2_y
+    U total_puck_velocity
+
+
+
+// ============================================================================
+// DEBUG FUNCTIONS
+// ============================================================================
+fn handle_debug_input()
+    if pads[0].held & BUTTON_SELECT && pads[0].held & BUTTON_A
+        debug_toggle_performance_gray_line_counter += 1
+        if debug_toggle_performance_gray_line_counter == THREE_SECONDS_FRAMES
+            debug_gray_line_on = !debug_gray_line_on // toggle
+            debug_toggle_performance_gray_line_counter = 0
+    else
+        debug_toggle_performance_gray_line_counter = 0
+
+    if pads[0].held & BUTTON_SELECT && pads[0].held & BUTTON_START
+            debug_reset_game_counter += 1
+            if debug_reset_game_counter == THREE_SECONDS_FRAMES
+                debug_reset_game_counter = 0
+                goto mode main()
+                : preserves // we preserve these to init the game
+    
+    if pads[0].held & BUTTON_SELECT && pads[0].held & BUTTON_RIGHT
+        game_objects[PUCK].pos.x.a += 1
+    if pads[0].held & BUTTON_SELECT && pads[0].held & BUTTON_LEFT
+        game_objects[PUCK].pos.x.a -= 1
+    if pads[0].held & BUTTON_SELECT && pads[0].held & BUTTON_UP
+        game_objects[PUCK].pos.y.a -= 1
+    if pads[0].held & BUTTON_SELECT && pads[0].held & BUTTON_DOWN
+        game_objects[PUCK].pos.y.a += 1 
+    if pads[0].held & BUTTON_SELECT && pads[0].held & BUTTON_B
+        game_objects[PUCK].vel.y = 1
+    if pads[0].held & BUTTON_SELECT && pads[0].held & BUTTON_A
+        game_objects[PUCK].vel.y = -1
+
+
+fn update_debug_vars()
+    puck_x = game_objects[PUCK].pos.x.a
+    puck_y = game_objects[PUCK].pos.y.a
+    mallet_1_x = game_objects[PLAYER_1].pos.x.a
+    mallet_1_y = game_objects[PLAYER_1].pos.y.a
+    mallet_2_x = game_objects[PLAYER_2].pos.x.a
+    mallet_2_y = game_objects[PLAYER_2].pos.y.a
+
+
+fn debug_performance_gray_line(U on)
+    if on
+        {PPUMASK}(PPUMASK_GRAYSCALE | PPUMASK_ON)
+        return
+    {PPUMASK}(PPUMASK_ON)

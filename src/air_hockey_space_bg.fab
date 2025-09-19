@@ -1,0 +1,66 @@
+// air_hockey_space_bg.fab — scrolling space background
+// Author: Brandon Thacker
+// License: MIT
+
+// ============================================================================
+// SPACE BG Helper Logic
+// ============================================================================
+vars /space_bg
+    AnimObject[16] far_stars
+    AnimObject[16] close_stars
+
+
+fn init_space_bg()
+    for U i = 0; i < 16; i += 1
+        far_stars[i].pos = FAR_STAR_POSITIONS[i]
+        far_stars[i].vel = FAR_STAR_VEL
+        U rand = randb(2)
+        switch rand
+            case 0
+                far_stars[i].sprite = $92
+                break
+            case 1
+                far_stars[i].sprite = $93
+                break
+    
+    for U i = 0; i < 16; i += 1
+        close_stars[i].pos = CLOSE_STAR_POSITIONS[i]
+        close_stars[i].vel = CLOSE_STAR_VEL
+        U rand = randb(2)
+        switch rand
+            case 0
+                close_stars[i].sprite = $90
+                break
+            case 1
+                close_stars[i].sprite = $91
+                break
+
+
+fn update_sprites_space_bg(U index) U 
+    U ind = index
+
+    for U i = 0; i < 16; i += 1
+        ind = push_oam(
+            ind, 
+            far_stars[i].pos.x.a, 
+            far_stars[i].pos.y.a, 
+            far_stars[i].sprite, 
+            $02 | ATTR_PRIORITY
+            )
+
+    for U i = 0; i < 16; i += 1
+        ind = push_oam(
+            ind, 
+            close_stars[i].pos.x.a, 
+            close_stars[i].pos.y.a, 
+            close_stars[i].sprite, 
+            $02 | ATTR_PRIORITY
+            )
+
+    return ind
+
+
+fn scroll_space_bg()
+    for U i = 0; i < 16; i += 1
+        far_stars[i].pos.x -= 0.01
+        close_stars[i].pos.x -= 0.10

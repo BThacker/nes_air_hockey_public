@@ -1,0 +1,281 @@
+// air_hockey_data.fab — rom data
+// Author: Brandon Thacker
+// License: MIT
+
+// ============================================================================
+// DATA
+// ============================================================================
+
+// ============================================================================
+// GRAPHICS DATA
+// ============================================================================
+// Character ROM data - defines all tiles used in the game
+chrrom
+    file(fmt, "..\chr\sprites.png") 
+    file(fmt, "..\chr\bg.png") 
+
+// Character mapping for text display
+charmap ("BLUESHOCNRDATIGM01234567KPY*- ", $E0)
+charmap spr("0123456789PAUSEDGOLTRIMVXCHY!ab ", $E0)
+
+// Background nametables (compressed with RLZ)
+data /rlz
+    [] gamefield_retro
+        file(rlz, "../nametables/air_hockey_retro.nam")
+    [] gamefield_arcade
+        file(rlz, "../nametables/air_hockey_arcade.nam")
+    [] gamefield_space
+        file(rlz, "../nametables/air_hockey_space.nam")
+    [] main_title
+        file(rlz, "../nametables/air_hockey_main.nam")
+
+// ============================================================================
+// AUDIO DATA
+// ============================================================================
+audio(puf1_music, "../audio/music.txt")
+audio(puf1_sfx, "../audio/sfx.txt", "../audio/sfx.nsf")
+
+// ============================================================================
+// COLOR PALETTES
+// ============================================================================
+// Note: To convert 32 to 25 colors, place transparency color at the end
+// and drop other references to transparency
+data /palettes
+    // Main menu color scheme
+    [] main_menu_palette
+        U[](
+        // Background palette (4 sets of 3 colors each)
+        $21, $04, $11,
+        $21, $02, $27,
+        $15, $23, $31,
+        $0F, $17, $30,
+        // Sprite palette (4 sets of 3 colors each)
+        $16, $06, $03,
+        $2A, $1B, $19,
+        $30, $00, $2D,
+        $00, $2D, $0F,
+        // Transparency color
+        $0F)
+
+    // Arcade theme game field colors
+    [] gamefield_palette_arcade
+        U[25](
+        // Background palette (4 sets of 3 colors each)
+        $12, $21, $16,
+        $00, $2D, $21,
+        $0F, $01, $00,
+        $18, $01, $04,
+        // Sprite palette (4 sets of 3 colors each)
+        $0F, $0F, $0F,
+        $0F, $0F, $0F,
+        $30, $16, $0C,
+        $00, $2D, $0F,
+        // Transparency color
+        $04)
+
+    // Space theme game field colors
+    [] gamefield_palette_space
+        U[](
+        // Background palette
+        $0C, $00, $16,
+        $2D, $0C, $00,
+        $16, $15, $30,
+        $10, $00, $0C,
+        // Sprite palette
+        $0F, $0F, $0F,
+        $0F, $0F, $0F,
+        $30, $01, $23,
+        $2D, $0C, $0F,
+        // Transparency color
+        $0F)
+    
+    [] gamefield_palette_retro
+        U[](
+        // Background palette
+        $0F, $0F, $30,
+        $0F, $0F, $0F,
+        $0F, $0F, $0F,
+        $0F, $0F, $0F,
+        // Sprite palette (4 sets of 3 colors each)
+        $0F, $0F, $0F,
+        $0F, $0F, $0F,
+        $30, $30, $30,
+        $30, $30, $30,
+        // Transparency color
+        $0F)
+
+// ============================================================================
+// METASPRITES
+// ============================================================================
+data /sprites
+    // Game Objects
+    [] mallet_metasprite_p1
+        (make_metasprite(0, Ms{}(
+            Ms(-8, -9, $01, $00),
+            Ms(  0, -9, $01, $00 | ATTR_H_FLIP),
+            Ms(-8,  -1, $01, $00 | ATTR_V_FLIP),
+            Ms(  0,  -1, $01, $00 | ATTR_H_FLIP | ATTR_V_FLIP))))
+    
+    [] mallet_metasprite_p2
+        (make_metasprite(0, Ms{}(
+            Ms(-8, -9, $01, $01),
+            Ms(  0, -9, $01, $01 | ATTR_H_FLIP),
+            Ms(-8,  -1, $01, $01 | ATTR_V_FLIP),
+            Ms(  0,  -1, $01, $01 | ATTR_H_FLIP | ATTR_V_FLIP))))
+    
+    [] puck_metasprite
+        (make_metasprite(0, Ms{}(
+            Ms(-4, -5, $02, $03))))
+
+    // Goal Nets (made from sprites for transparency effect)
+    [] top_net_metasprite
+        (make_metasprite(0, Ms{}(
+            Ms(-24,  0, $04, $02 | ATTR_V_FLIP),
+            Ms(-16,  0, $05, $02 | ATTR_V_FLIP),
+            Ms( -8,  0, $06, $02 | ATTR_V_FLIP),
+            Ms(  0,  0, $07, $02 | ATTR_V_FLIP),
+            Ms(  8,  0, $05, $02 | ATTR_V_FLIP),
+            Ms( 16,  0, $08, $02 | ATTR_V_FLIP))))
+
+    [] bot_net_metasprite
+        (make_metasprite(0, Ms{}(
+            Ms(-24, -8, $04, $02),
+            Ms(-16, -8, $05, $02),
+            Ms( -8, -8, $06, $02),
+            Ms(  0, -8, $07, $02),
+            Ms(  8, -8, $05, $02),
+            Ms( 16, -8, $08, $02))))
+
+    // UI Elements
+    [] menu_mallet_metasprite
+        (make_metasprite(0, Ms{}(
+            Ms(-8, -8, $03, $00),
+            Ms(  0, -8, $03, ATTR_H_FLIP),
+            Ms(-8,  0, $13, $00),
+            Ms(  0,  0, $13, ATTR_H_FLIP))))
+
+
+    [] paused_metasprite
+        (make_metasprite(0, Ms{}(
+            Ms(-24, -64, "P"spr[0], $02),
+            Ms(-16, -64, "A"spr[0], $02),
+            Ms( -8, -64, "U"spr[0], $02),
+            Ms(  0, -64, "S"spr[0], $02),
+            Ms(  8, -64, "E"spr[0], $02),
+            Ms( 16, -64, "D"spr[0], $02),
+            Ms( -4, 13, "a"spr[0], $02),
+            Ms( -16, 24, "E"spr[0], $02),
+            Ms(-8, 24, "X"spr[0], $02),
+            Ms(0, 24, "I"spr[0], $02),
+            Ms(8, 24, "T"spr[0], $02),
+            Ms(-16, 32, "G"spr[0], $02),
+            Ms(-8, 32, "A"spr[0], $02),
+            Ms( -0, 32, "M"spr[0], $02),
+            Ms(  8, 32, "E"spr[0], $02))))
+    
+    [] timer_metasprite
+        (make_metasprite(0, Ms{}(
+            Ms(-24, -64, "T"spr[0], $02),
+            Ms(-16, -64, "I"spr[0], $02),
+            Ms( -8, -64, "M"spr[0], $02),
+            Ms(  0, -64, "E"spr[0], $02),
+            Ms(  8, -64, "R"spr[0], $02),
+            Ms( 16, -64, "!"spr[0], $02))))
+    
+    [] trap_metasprite
+        (make_metasprite(0, Ms{}(
+            Ms(-24, -64, "T"spr[0], $02),
+            Ms(-16, -64, "R"spr[0], $02),
+            Ms( -8, -64, "A"spr[0], $02),
+            Ms(  0, -64, "P"spr[0], $02),
+            Ms(  8, -64, "!"spr[0], $02),
+            Ms( 16, -64, "!"spr[0], $02))))
+
+    [] goal_metasprite
+        (make_metasprite(0, Ms{}(
+            Ms(-24, -64, "G"spr[0], $02),
+            Ms(-16, -64, "O"spr[0], $02),
+            Ms( -8, -64, "A"spr[0], $02),
+            Ms(  0, -64, "L"spr[0], $02),
+            Ms(  8, -64, "!"spr[0], $02),
+            Ms( 16, -64, "!"spr[0], $02),
+            Ms( -24, -56, "R"spr[0], $02),
+            Ms( -16, -56, "E"spr[0], $02),
+            Ms(-8, -56, "P"spr[0], $02),
+            Ms(0, -56, "L"spr[0], $02),
+            Ms(8, -56, "A"spr[0], $02),
+            Ms(16, -56, "Y"spr[0], $02))))
+
+    [] game_over_metasprite
+        (make_metasprite(0, Ms{}(
+            Ms(-16, -72, "G"spr[0], $02),
+            Ms(-8, -72, "A"spr[0], $02),
+            Ms( -0, -72, "M"spr[0], $02),
+            Ms(  8, -72, "E"spr[0], $02),
+            Ms(-16, -64, "O"spr[0], $02),
+            Ms(-8, -64, "V"spr[0], $02),
+            Ms( -0, -64, "E"spr[0], $02),
+            Ms(  8, -64, "R"spr[0], $02),
+            Ms( -4, -11, "b"spr[0], $02),
+            Ms( -28, 0, "R"spr[0], $02),
+            Ms( -20, 0, "E"spr[0], $02),
+            Ms( -12, 0, "M"spr[0], $02),
+            Ms( -4, 0, "A"spr[0], $02),
+            Ms( 4, 0, "T"spr[0], $02),
+            Ms( 12, 0, "C"spr[0], $02),
+            Ms( 20, 0, "H"spr[0], $02),
+            Ms( -4, 13, "a"spr[0], $02),
+            Ms( -16, 24, "E"spr[0], $02),
+            Ms(-8, 24, "X"spr[0], $02),
+            Ms(0, 24, "I"spr[0], $02),
+            Ms(8, 24, "T"spr[0], $02),
+            Ms(-16, 32, "G"spr[0], $02),
+            Ms(-8, 32, "A"spr[0], $02),
+            Ms( -0, 32, "M"spr[0], $02),
+            Ms(  8, 32, "E"spr[0], $02))))
+
+    // Utility Sprites
+    [] line_helper_metasprite
+        (make_metasprite(0, Ms{}(
+            Ms(-56, -5, $14, $02),
+            Ms( 48, -5, $14, $02))))
+
+// ============================================================================
+// MENU DATA
+// ============================================================================
+data /menu_data
+    // Player selection screen text
+    [] PLAYER_SELECT_TILES
+        U[](
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        '1', ' ', 'P', 'L', 'A', 'Y', 'E', 'R',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        '2', ' ', 'P', 'L', 'A', 'Y', 'E', 'R',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ') 
+
+    // Theme selection screen text
+    [] THEME_SELECT_TILES
+        U[](
+        ' ', 'T', 'H', 'E', 'M', 'E', ' ', ' ',
+        '-', '-', '-', '-', '-', '-', '-', '-',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', 'A', 'R', 'C', 'A', 'D', 'E', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', 'S', 'P', 'A', 'C', 'E', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', 'R', 'E', 'T', 'R', 'O', ' ', ' ')
+    
+    // Color selection screen text
+    [] COLOR_SELECT_TILES
+        U[](
+        ' ', 'C', 'O', 'L', 'O', 'R', ' ', ' ',
+        '-', '-', '-', '-', '-', '-', '-', '-',
+        ' ', 'R', 'E', 'D', ' ', ' ', ' ', ' ',
+        ' ', 'B', 'L', 'U', 'E', ' ', ' ', ' ',
+        ' ', 'G', 'R', 'E', 'E', 'N', ' ', ' ',
+        ' ', 'P', 'U', 'R', 'P', 'L', 'E', ' ',
+        ' ', 'O', 'R', 'A', 'N', 'G', 'E', ' ',
+        ' ', 'P', 'I', 'N', 'K', ' ', ' ', ' ')

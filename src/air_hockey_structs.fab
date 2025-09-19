@@ -1,0 +1,57 @@
+// air_hockey_structs.fab — structs
+// Author: Brandon Thacker
+// License: MIT
+
+// ============================================================================
+// STRUCTS
+// ============================================================================
+// basic vector data
+struct Vector2U
+    U x
+    U y
+
+// positional data for objects with floating point precision
+struct Vector2UF
+    UF x
+    UF y
+
+// velocity data for objects with floating point precision
+struct Vector2SF
+    SF x
+    SF y
+
+struct AnimObject
+    Vector2UF pos
+    Vector2SF vel
+    U sprite
+    
+struct AnimObjectMeta
+    Vector2UF pos
+    Vector2SF vel
+    CCC/sprites metasprite
+    U flags
+
+struct PhysicsObject // puck or mallet
+    Vector2UF pos
+    Vector2SF vel
+    U moving
+    CCC/sprites metasprite
+    U cooldown_timer
+
+struct LogoRinkBounds
+    U left_x
+    U right_x
+    U top_y
+    U bottom_y
+
+struct RinkDimensions
+    U left_x
+    U right_x
+    U top_y
+    U bottom_y
+    U left_net_x
+    U right_net_x
+    U center_y
+    U center_x
+    U center_y_p1_collision_check
+    U center_y_p2_collision_check
