@@ -154,7 +154,7 @@ Potential features for future versions:
 - Additional human like AI behavior
 
 ## License
-This project is open source. The NESFab compiler is licensed under GPL 3.0, while the standard library and examples use the Boost Software License 1.0.
+This project is open source via MIT. The NESFab compiler is licensed under GPL 3.0, while the standard library and examples use the Boost Software License 1.0.
 
 ## Credits
 - Programming & Design / Game Art - Brandon Thacker [github](https://github.com/bthacker) | discord: imex7315
