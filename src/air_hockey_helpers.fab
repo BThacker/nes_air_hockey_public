@@ -34,6 +34,14 @@ fn rand_range(U lower, U upper) U
 
     return result + lower
 
+fn tile_at(U x, U y) U
+    // Divide by 8 to get the tile position:
+    x >>= 3
+    y >>= 3
+
+    return (@rink + UU(y * 32))[x]
+    : +inline
+
 // ============================================================================
 // NMI Helper Functions
 // ============================================================================

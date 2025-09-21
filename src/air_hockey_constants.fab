@@ -13,7 +13,7 @@ ct U ONE_SECOND_FRAMES = 60              // 60 fps
 ct U THREE_SECONDS_FRAMES = 180          // 3 seconds at 60 fps
 ct U TWO_SECONDS_FRAMES = 120            // 2 seconds
 ct U FADE_PERIOD = 8                     // visual effects timing
-ct U IDLE_SECONDS_BEFORE_ATTRACT = 15  // if on original menu, and idle, attract
+ct U IDLE_SECONDS_BEFORE_ATTRACT = 3  // if on original menu, and idle, attract
 
 // ============================================================================
 // CORE GAME CONFIGURATION

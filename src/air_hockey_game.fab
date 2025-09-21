@@ -211,50 +211,64 @@ fn collide_puck_rink()
         game_objects[PUCK].vel.x = -game_objects[PUCK].vel.x
         puf.play_sfx(3)
 
-    if game_objects[PUCK].moving & MOVING_UP
-        // Only skip wall collision if puck is actually entering the goal
-        if (
-            game_objects[PUCK].pos.x.a > RINK_DIMENSIONS.left_net_x && 
-            game_objects[PUCK].pos.x.a < RINK_DIMENSIONS.right_net_x &&
-            game_objects[PUCK].pos.y.a <= RINK_DIMENSIONS.top_y + PUCK_RADIUS
-        )
-            return
-        if is_colliding_rink(PUCK_RADIUS, PUCK, MOVING_UP)
-            game_objects[PUCK].pos.y = RINK_DIMENSIONS.top_y + PUCK_RADIUS + 1
-            game_objects[PUCK].vel.y = -game_objects[PUCK].vel.y
-            puf.play_sfx(3)
+
+    if is_colliding_rink(PUCK_RADIUS, PUCK, MOVING_UP)
+        game_objects[PUCK].pos.y = RINK_DIMENSIONS.top_y + PUCK_RADIUS + 1
+        game_objects[PUCK].vel.y = -game_objects[PUCK].vel.y
+        puf.play_sfx(3)
 
 
-    if game_objects[PUCK].moving & MOVING_DOWN
-        // Only skip wall collision if puck is actually entering the goal
-        if (
-            game_objects[PUCK].pos.x.a > RINK_DIMENSIONS.left_net_x && 
-            game_objects[PUCK].pos.x.a < RINK_DIMENSIONS.right_net_x &&
-            game_objects[PUCK].pos.y.a >= RINK_DIMENSIONS.bottom_y - PUCK_RADIUS
-        )
-            return
-        if is_colliding_rink(PUCK_RADIUS, PUCK, MOVING_DOWN)
-            game_objects[PUCK].pos.y = RINK_DIMENSIONS.bottom_y - PUCK_RADIUS - 1
-            game_objects[PUCK].vel.y = -game_objects[PUCK].vel.y
-            puf.play_sfx(3)
+    if is_colliding_rink(PUCK_RADIUS, PUCK, MOVING_DOWN)
+        game_objects[PUCK].pos.y = RINK_DIMENSIONS.bottom_y - PUCK_RADIUS - 1
+        game_objects[PUCK].vel.y = -game_objects[PUCK].vel.y
+        puf.play_sfx(3)
 
 
 fn is_colliding_rink(U rad, U object_idx, U direction) Bool
     switch direction
         case MOVING_LEFT
-            if game_objects[object_idx].pos.x.a - rad < RINK_DIMENSIONS.left_x
+            if tile_at(
+                game_objects[object_idx].pos.x.a - rad, 
+                game_objects[object_idx].pos.y.a
+                ) == '#'
                 return true
             break
         case MOVING_RIGHT
-            if game_objects[object_idx].pos.x.a + rad > RINK_DIMENSIONS.right_x
+            if tile_at(
+                game_objects[object_idx].pos.x.a + rad, 
+                game_objects[object_idx].pos.y.a
+                ) == '#'
                 return true
             break
         case MOVING_UP
-            if game_objects[object_idx].pos.y.a - rad < RINK_DIMENSIONS.top_y
+            if (
+                tile_at
+                    (
+                    game_objects[object_idx].pos.x.a + rad,
+                    game_objects[object_idx].pos.y.a - rad
+                    ) == '#'
+                 ||
+                tile_at
+                    (
+                    game_objects[object_idx].pos.x.a - rad, 
+                    game_objects[object_idx].pos.y.a - rad
+                    ) == '#'
+                )
                 return true
             break
         case MOVING_DOWN
-            if game_objects[object_idx].pos.y.a + rad > RINK_DIMENSIONS.bottom_y
+            if (
+                tile_at
+                    (
+                    game_objects[object_idx].pos.x.a - rad, 
+                    game_objects[object_idx].pos.y.a + rad
+                    ) == '#'
+                || 
+                tile_at(
+                    game_objects[object_idx].pos.x.a + rad, 
+                    game_objects[object_idx].pos.y.a + rad
+                    ) == '#'
+                )
                 return true
             break
         case MOVING_UP_CENTER

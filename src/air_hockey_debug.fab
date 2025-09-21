@@ -6,7 +6,7 @@
 // VARS, some of these assist with tracking inside mesen easier
 // ============================================================================
 vars /debug
-    Bool debug_mode = false
+    Bool debug_mode = true
     U debug_toggle_performance_gray_line_counter = 0
     U debug_reset_game_counter = 0
     Bool debug_gray_line_on = false
@@ -47,9 +47,9 @@ fn handle_debug_input()
         game_objects[PUCK].pos.y.a -= 1
     if pads[0].held & BUTTON_SELECT && pads[0].held & BUTTON_DOWN
         game_objects[PUCK].pos.y.a += 1 
-    if pads[0].held & BUTTON_SELECT && pads[0].held & BUTTON_B
+    //if pads[0].held & BUTTON_SELECT && pads[0].held & BUTTON_B
         game_objects[PUCK].vel.y = 1
-    if pads[0].held & BUTTON_SELECT && pads[0].held & BUTTON_A
+    //if pads[0].held & BUTTON_SELECT && pads[0].held & BUTTON_A
         game_objects[PUCK].vel.y = -1
 
 
