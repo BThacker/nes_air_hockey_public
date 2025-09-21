@@ -1,3 +1,6 @@
 nesfab-master/
+.vscode/
+nesfab-master/
+.DS_Store
 *.mlb
 *.nes

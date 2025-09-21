@@ -72,24 +72,24 @@ fn execute_ai_behavior()
     // determine which side is "AI"
     if ai_player == PLAYER_2
         // AI is PLAYER_2 (top), so AI side is top half
-        puck_on_ai_side = game_objects[PUCK].pos.y < RINK_DIMENSIONS.center_y
+        puck_on_ai_side = game_objects[PUCK].pos.y <= RINK_DIMENSIONS.center_y
         puck_approaching_goal = (
             game_objects[PUCK].vel.y < -0.1 
-            && game_objects[PUCK].pos.y < RINK_DIMENSIONS.center_y + 20
+            && game_objects[PUCK].pos.y <= RINK_DIMENSIONS.center_y + 20
             )
         puck_moving_away_from_goal = (
             game_objects[PUCK].vel.y > 0.1 
-            && game_objects[PUCK].pos.y < RINK_DIMENSIONS.center_y
+            && game_objects[PUCK].pos.y <= RINK_DIMENSIONS.center_y
             )
     else
-        puck_on_ai_side = game_objects[PUCK].pos.y > RINK_DIMENSIONS.center_y
+        puck_on_ai_side = game_objects[PUCK].pos.y >= RINK_DIMENSIONS.center_y
         puck_approaching_goal = (
             game_objects[PUCK].vel.y > 0.1 
-            && game_objects[PUCK].pos.y > RINK_DIMENSIONS.center_y - 20
+            && game_objects[PUCK].pos.y >= RINK_DIMENSIONS.center_y - 20
             )
         puck_moving_away_from_goal = (
             game_objects[PUCK].vel.y < -0.1 
-            && game_objects[PUCK].pos.y > RINK_DIMENSIONS.center_y
+            && game_objects[PUCK].pos.y >= RINK_DIMENSIONS.center_y
             )
     
     puck_slow_or_stationary_or_horizontal = (
