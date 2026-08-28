@@ -1,7 +1,7 @@
 #!/bin/bash
 
-rom_name="air_hockey_rev1_1.nes"
-labels_name="air_hockey_rev1_1.mlb"
+rom_name="air_hockey_rev1A.nes"
+labels_name="air_hockey_rev1A.mlb"
 compiler_args=(air_hockey.cfg)
 
 case "${1:-}" in

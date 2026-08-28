@@ -4,7 +4,7 @@
 
 - This is an NES air hockey game written in NESFab (`.fab` files).
 - This runs on original Nintendo Entertainment System hardware. Performance, RAM usage, ROM size, and cycle-efficient code are critical; avoid adding unnecessary work to frame-time code paths.
-- The compiler configuration is `air_hockey.cfg`; it produces `air_hockey_rev1_1.nes`.
+- The compiler configuration is `air_hockey.cfg`; it produces `air_hockey_rev1A.nes`.
 - Game code lives in `src/`. Graphics, layouts, and audio live in `chr/`, `nametables/`, and `audio/`.
 
 ## Building

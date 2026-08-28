@@ -1,19 +1,19 @@
-del air_hockey_rev1_1.nes 2>nul
+del air_hockey_rev1A.nes 2>nul
 ".\nesfab\nesfab.exe" air_hockey.cfg
-if exist air_hockey_rev1_1.nes (
-    echo Launching Mesen with air_hockey_rev1_1.nes...
+if exist air_hockey_rev1A.nes (
+    echo Launching Mesen with air_hockey_rev1A.nes...
     REM Use MESEN_PATH env var if set, otherwise try to find mesen.exe in PATH
     if defined MESEN_PATH (
-        "%MESEN_PATH%" "%~dp0air_hockey_rev1_1.nes"
+        "%MESEN_PATH%" "%~dp0air_hockey_rev1A.nes"
     ) else (
         where mesen.exe >nul 2>nul
         if %errorlevel%==0 (
-            mesen.exe "%~dp0air_hockey_rev1_1.nes"
+            mesen.exe "%~dp0air_hockey_rev1A.nes"
         ) else (
             echo Mesen not found. Set MESEN_PATH environment variable to your mesen.exe path to auto-launch.
-            echo Build succeeded: air_hockey_rev1_1.nes
+            echo Build succeeded: air_hockey_rev1A.nes
         )
     )
 ) else (
-    echo Build failed - air_hockey_rev1_1.nes not found
+    echo Build failed - air_hockey_rev1A.nes not found
     exit /b 1

@@ -70,8 +70,8 @@ A classic air hockey game built for the Nintendo Entertainment System (NES) usin
 This project requires [NESFab 1.8](https://github.com/pubby/nesfab/releases/tag/v1.8). Place the NESFab executable and source distribution in `nesfab/` as described in [nesfab/README.md](nesfab/README.md).
 
 - Windows: run `build.bat` from the repository root. If Mesen is not on `PATH`, set `MESEN_PATH` to its executable path to launch the ROM automatically.
-- macOS: install Wine and Mesen, then run `bash build_macos.sh` from the repository root. Run `bash build_macos.sh debug` to also generate `air_hockey_rev1_1.mlb` labels for Mesen debugging.
-- The build produces `air_hockey_rev1_1.nes`, which runs on original NROM-compatible hardware and common NES emulators.
+- macOS: install Wine and Mesen, then run `bash build_macos.sh` from the repository root. Run `bash build_macos.sh debug` to also generate `air_hockey_rev1A.mlb` labels for Mesen debugging.
+- The build produces `air_hockey_rev1A.nes`, which runs on original NROM-compatible hardware and common NES emulators.
 
 ### Source Formatting
 
