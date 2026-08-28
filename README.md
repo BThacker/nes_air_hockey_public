@@ -32,7 +32,7 @@ A classic air hockey game built for the Nintendo Entertainment System (NES) usin
 - **Two-Player Support**: Play against a friend or challenge the AI
 - **Intelligent AI Opponent**: Advanced AI with multiple behavioral states (defensive, aggressive, counter-attack, neutral, backoff)
 - **Score Tracking**: First to 7 goals wins (standard air hockey rules)
-- **Replay System**: Watch the last 2 seconds of gameplay in slow motion after each goal
+- **Replay System**: Watch roughly 0.4 seconds of gameplay replayed as a two-second 5× slow-motion highlight after each goal
 
 ### Visual Themes
 - **Arcade Theme**: Standard air hockey table in a retro arcade
@@ -67,13 +67,18 @@ A classic air hockey game built for the Nintendo Entertainment System (NES) usin
 
 ## Building
 
-### Info
-- Game is built with the library [NESFab](https://pubby.games/nesfab.html)
-- Windows (tested on Windows 10/11)
-- M3 Macbook Pro (via WINE)
-- NESFab compiler v1.8  [nesfab github](https://github.com/pubby/nesfab) [release](https://github.com/pubby/nesfab/releases/tag/v1.8)
-- Emulator of choice, tested Mesen, Nestopia, Fceux
-- Will work on any flash cart on original hardware
+This project requires [NESFab 1.8](https://github.com/pubby/nesfab/releases/tag/v1.8). Place the NESFab executable and source distribution in `nesfab/` as described in [nesfab/README.md](nesfab/README.md).
+
+- Windows: run `build.bat` from the repository root. If Mesen is not on `PATH`, set `MESEN_PATH` to its executable path to launch the ROM automatically.
+- macOS: install Wine and Mesen, then run `bash build_macos.sh` from the repository root.
+- The build produces `air_hockey_rev1_1.nes`, which runs on original NROM-compatible hardware and common NES emulators.
+
+### Source Formatting
+
+- Check formatting: `bash scripts/format_fab.sh --check`
+- Apply formatting: `bash scripts/format_fab.sh --write`
+
+The formatter only affects `.fab` source in `src/`: trailing whitespace, blank-line spacing, and final newlines. VS Code workspace settings also remove trailing whitespace and enforce four-space indentation when files are saved.
 
 ### Tools Used in Development
  - [NESFab](https://github.com/pubby/nesfab)
@@ -88,10 +93,12 @@ A classic air hockey game built for the Nintendo Entertainment System (NES) usin
 ```
 nes_air_hockey/
 ├── src/                          # Source code
-│   ├── air_hockey_main.fab       # Main menu and initialization
+│   ├── air_hockey_main_menu.fab  # Application entry point, main menu, and initialization
 │   ├── air_hockey_game.fab       # Core game logic
+│   ├── air_hockey_physics.fab    # Movement and collision simulation
 │   ├── air_hockey_constants.fab  # Game constants and configuration
 │   ├── air_hockey_data.fab       # Graphics, audio, and palette data
+│   ├── air_hockey_debug.fab      # Development-only debug utilities
 │   ├── air_hockey_drone.fab      # AI opponent logic
 │   ├── air_hockey_replay.fab     # Replay system
 │   ├── air_hockey_helpers.fab    # Utility functions
@@ -111,8 +118,10 @@ nes_air_hockey/
 │   └── sfx.txt                   # Sound effects
 │
 ├── marketing/                   # Promotional materials
-├── nesfab-master/               # [NESFab](https://github.com/pubby/nesfab) compiler and libraries, download from link
-└── build.bat                    # Sample Build script
+├── nesfab/                      # Locally supplied NESFab compiler and source distribution
+├── air_hockey.cfg               # NESFab build configuration
+├── build.bat                    # Windows build and optional Mesen launch script
+└── build_macos.sh               # macOS Wine build and Mesen launch script
 ```
 
 
@@ -162,5 +171,4 @@ This project is open source via MIT. The NESFab compiler is licensed under GPL 3
 - Art Consulting, Cover Art  - @grigoreen [website](https://www.instagram.com/grigoreen/)
 
 ## Known Issues
-- The puck can react unexpectedly in certain interactions with the mallet
-- The collision detection for passing into the goal could be better
+- Goal-mouth collision edge cases could still be improved

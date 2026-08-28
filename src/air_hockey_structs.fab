@@ -5,17 +5,17 @@
 // ============================================================================
 // STRUCTS
 // ============================================================================
-// basic vector data
+// Pixel-coordinate vector.
 struct Vector2U
     U x
     U y
 
-// positional data for objects with floating point precision
+// Fixed-point position vector.
 struct Vector2UF
     UF x
     UF y
 
-// velocity data for objects with floating point precision
+// Signed fixed-point velocity vector.
 struct Vector2SF
     SF x
     SF y
@@ -24,19 +24,32 @@ struct AnimObject
     Vector2UF pos
     Vector2SF vel
     U sprite
-    
-struct AnimObjectMeta
-    Vector2UF pos
-    Vector2SF vel
-    CCC/sprites metasprite
-    U flags
 
 struct PhysicsObject // puck or mallet
     Vector2UF pos
     Vector2SF vel
-    U moving
+    Bool boosting
     CCC/sprites metasprite
     U cooldown_timer
+
+struct GameState
+    Bool paused
+    PhysicsObject[3] objects
+    U player1_score
+    U player2_score
+    Vector2U last_hit_puck_position
+    U last_hit_puck_counter
+    U last_hit_puck_player
+    Bool[2] mallet_touching_puck
+    U friction_counter
+
+struct DroneState
+    U can_start_counter
+    U backoff_counter
+    U hit_counter
+    U idle_frame_counter
+    SF idle_offset_x
+    SF idle_offset_y
 
 struct LogoRinkBounds
     U left_x

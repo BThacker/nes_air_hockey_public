@@ -3,7 +3,7 @@
 // License: MIT
 
 // ============================================================================
-// VARS, some of these assist with tracking inside mesen easier
+// DEBUG STATE
 // ============================================================================
 vars /debug
     Bool debug_mode = false
@@ -17,8 +17,6 @@ vars /debug
     U mallet_2_x
     U mallet_2_y
     U total_puck_velocity
-
-
 
 // ============================================================================
 // DEBUG FUNCTIONS
@@ -38,29 +36,27 @@ fn handle_debug_input()
                 debug_reset_game_counter = 0
                 goto mode main()
                 : preserves // we preserve these to init the game
-    
-    if pads[0].held & BUTTON_SELECT && pads[0].held & BUTTON_RIGHT
-        game_objects[PUCK].pos.x.a += 1
-    if pads[0].held & BUTTON_SELECT && pads[0].held & BUTTON_LEFT
-        game_objects[PUCK].pos.x.a -= 1
-    if pads[0].held & BUTTON_SELECT && pads[0].held & BUTTON_UP
-        game_objects[PUCK].pos.y.a -= 1
-    if pads[0].held & BUTTON_SELECT && pads[0].held & BUTTON_DOWN
-        game_objects[PUCK].pos.y.a += 1 
-    if pads[0].held & BUTTON_SELECT && pads[0].held & BUTTON_B
-        game_objects[PUCK].vel.y = 1
-    if pads[0].held & BUTTON_SELECT && pads[0].held & BUTTON_A
-        game_objects[PUCK].vel.y = -1
 
+    if pads[0].held & BUTTON_SELECT && pads[0].held & BUTTON_RIGHT
+        game_state.objects[PUCK].pos.x.a += 1
+    if pads[0].held & BUTTON_SELECT && pads[0].held & BUTTON_LEFT
+        game_state.objects[PUCK].pos.x.a -= 1
+    if pads[0].held & BUTTON_SELECT && pads[0].held & BUTTON_UP
+        game_state.objects[PUCK].pos.y.a -= 1
+    if pads[0].held & BUTTON_SELECT && pads[0].held & BUTTON_DOWN
+        game_state.objects[PUCK].pos.y.a += 1
+    if pads[0].held & BUTTON_SELECT && pads[0].held & BUTTON_B
+        game_state.objects[PUCK].vel.y = 1
+    if pads[0].held & BUTTON_SELECT && pads[0].held & BUTTON_A
+        game_state.objects[PUCK].vel.y = -1
 
 fn update_debug_vars()
-    puck_x = game_objects[PUCK].pos.x.a
-    puck_y = game_objects[PUCK].pos.y.a
-    mallet_1_x = game_objects[PLAYER_1].pos.x.a
-    mallet_1_y = game_objects[PLAYER_1].pos.y.a
-    mallet_2_x = game_objects[PLAYER_2].pos.x.a
-    mallet_2_y = game_objects[PLAYER_2].pos.y.a
-
+    puck_x = game_state.objects[PUCK].pos.x.a
+    puck_y = game_state.objects[PUCK].pos.y.a
+    mallet_1_x = game_state.objects[PLAYER_1].pos.x.a
+    mallet_1_y = game_state.objects[PLAYER_1].pos.y.a
+    mallet_2_x = game_state.objects[PLAYER_2].pos.x.a
+    mallet_2_y = game_state.objects[PLAYER_2].pos.y.a
 
 fn debug_performance_gray_line(U on)
     if on

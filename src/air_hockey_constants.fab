@@ -3,9 +3,6 @@
 // License: MIT
 
 // ============================================================================
-// CONSTANTS
-// ============================================================================
-
 // ============================================================================
 // TIMING & FRAME RATE
 // ============================================================================
@@ -13,33 +10,32 @@ ct U ONE_SECOND_FRAMES = 60              // 60 fps
 ct U THREE_SECONDS_FRAMES = 180          // 3 seconds at 60 fps
 ct U TWO_SECONDS_FRAMES = 120            // 2 seconds
 ct U FADE_PERIOD = 8                     // visual effects timing
-ct U IDLE_SECONDS_BEFORE_ATTRACT = 15  // if on original menu, and idle, attract
+ct U IDLE_SECONDS_BEFORE_ATTRACT = 15  // Idle seconds before attract mode begins.
 
 // ============================================================================
 // CORE GAME CONFIGURATION
 // ============================================================================
-ct U SCORE_TO_WIN = 7                    // standard air hockey rules
-ct U STUCK_PUCK_HIT_MAX = 25             // if hits occur in quick succession, puck is stuck
+ct U SCORE_TO_WIN = 7                    // Standard air hockey rules.
+ct U STUCK_PUCK_HIT_MAX = 25             // Repeated nearby hits indicate a trapped puck.
 ct U STUCK_PUCK_HIT_DISTANCE = 10
 
 // ============================================================================
 // PHYSICS & SIMULATION
 // ============================================================================
-ct SF FRICTION = 0.99                    // higher = less friction (simulate ice)
-ct U PHYSICS_TICKS = 5                   // physics updates per frame (prevents tunneling)
-ct U FRICTION_APPLY_TICKS = 2            // apply friction every N ticks
+ct SF FRICTION = 0.99                    // Higher values produce less friction.
+ct U PHYSICS_TICKS = 5                   // Prevents puck tunneling at high speed.
+ct U FRICTION_APPLY_TICKS = 2            // Rendered frames between friction updates.
 
 // ============================================================================
 // MOVEMENT & COLLISION SYSTEM
 // ============================================================================
-// Movement flags (bitmask) - used by "moving" flag in PhysicsObject struct
-ct U MOVING_LEFT = 1 << 0
-ct U MOVING_RIGHT = 1 << 1
-ct U MOVING_UP = 1 << 2
-ct U MOVING_DOWN = 1 << 3
-ct U MOVING_UP_CENTER = 1 << 4
-ct U MOVING_DOWN_CENTER = 1 << 5
-ct U BOOSTING = 1 << 6
+// Rink-boundary direction selectors.
+ct U DIRECTION_LEFT = 0
+ct U DIRECTION_RIGHT = 1
+ct U DIRECTION_UP = 2
+ct U DIRECTION_DOWN = 3
+ct U DIRECTION_UP_CENTER = 4
+ct U DIRECTION_DOWN_CENTER = 5
 
 // ============================================================================
 // GAME OBJECT PROPERTIES
@@ -48,14 +44,14 @@ ct Int PUCK_RADIUS = 4
 ct Int PUCK_DIAMETER = PUCK_RADIUS * 2
 ct Int MALLET_RADIUS = 7
 ct Int MALLET_DIAMETER = MALLET_RADIUS * 2
-ct Int COLLISION_THRESHOLD = PUCK_DIAMETER * (MALLET_DIAMETER - 4) // tuned for feel
+ct Int COLLISION_THRESHOLD = PUCK_DIAMETER * (MALLET_DIAMETER - 4) // Tuned for feel.
 ct UF MALLET_SPEED_NORMAL = 0.5
 ct UF MALLET_SPEED_BOOST = 1.0
-ct U MALLET_COOLDOWN_TIMER = 10          // frames, gives chunky feel
+ct U MALLET_COOLDOWN_TIMER = 10          // Rendered frames between mallet hits.
 ct Vector2SF VEL_ZERO = Vector2SF(0, 0)
 
 // ============================================================================
-// RINK / BOUNDARIES
+// RINK BOUNDARIES
 // ============================================================================
 ct RinkDimensions RINK_DIMENSIONS = RinkDimensions(
     72,   // left_x
@@ -72,17 +68,17 @@ ct RinkDimensions RINK_DIMENSIONS = RinkDimensions(
 
 ct LogoRinkBounds logo_rink_bounds = LogoRinkBounds(74, 110, 34, 48)
 
-// Goal sprite positions (sprites used so puck can pass under when scoring)
-ct Vector2U TOP_NET_POS = Vector2U(128, 15)   // player 2 goal (top)
-ct Vector2U BOT_NET_POS = Vector2U(128, 223)  // player 1 goal (bottom)
+// Goal nets are sprites so the puck can pass underneath while scoring.
+ct Vector2U TOP_NET_POS = Vector2U(128, 15)   // Player 2 goal.
+ct Vector2U BOT_NET_POS = Vector2U(128, 223)  // Player 1 goal.
 
 // ============================================================================
 // PLAYER POSITIONS
 // ============================================================================
-ct Vector2UF MALLET_P1_START = Vector2UF(128, 188)   // player 1 (bottom)
-ct Vector2UF MALLET_P2_START = Vector2UF(128, 52)    // player 2 (top)
-ct Vector2UF PUCK_START_P1 = Vector2UF(128, 160)     // puck start when player 1 serves
-ct Vector2UF PUCK_START_P2 = Vector2UF(128, 80)      // puck start when player 2 serves
+ct Vector2UF MALLET_P1_START = Vector2UF(128, 188)   // Bottom player.
+ct Vector2UF MALLET_P2_START = Vector2UF(128, 52)    // Top player.
+ct Vector2UF PUCK_START_P1 = Vector2UF(128, 160)     // Player 1 serve.
+ct Vector2UF PUCK_START_P2 = Vector2UF(128, 80)      // Player 2 serve.
 
 // ============================================================================
 // SPACE THEME BACKGROUND EFFECTS
@@ -135,18 +131,18 @@ ct U AI_HIT_THRESHOLD = 5
 ct U AI_BACKOFF_DURATION = 30
 ct U AI_PREDICTION_FRAMES = 8
 ct U AI_CLOSE_DISTANCE_THRESHOLD = 40
-ct U AI_MIN_Y = RINK_DIMENSIONS.top_y + 3      // sprites are slightly offset
+ct U AI_MIN_Y = RINK_DIMENSIONS.top_y + 3      // Accounts for sprite offset.
 ct U AI_MAX_Y = RINK_DIMENSIONS.bottom_y - 4
 
 // ============================================================================
 // USER INTERFACE ELEMENTS
 // ============================================================================
-ct Vector2U SCORE_1_POS = Vector2U(54, 131)          // player 1 score position
-ct Vector2U SCORE_2_POS = Vector2U(54, 101)          // player 2 score position
-ct Vector2U SCORE_TO_WIN_POS = Vector2U(54, 116)     // score-to-win display
+ct Vector2U SCORE_1_POS = Vector2U(54, 131)          // Player 1 score.
+ct Vector2U SCORE_2_POS = Vector2U(54, 101)          // Player 2 score.
+ct Vector2U SCORE_TO_WIN_POS = Vector2U(54, 116)     // Score-to-win display.
 ct U NUMBER_SPRITES_START = $E0
 
-ct Vector2U NOTIFY_SPRITE_POS = Vector2U(128, 150)   // pause/notify indicator position
+ct Vector2U NOTIFY_SPRITE_POS = Vector2U(128, 150)   // Pause and status indicator.
 
 // ============================================================================
 // MENU SYSTEM
@@ -157,12 +153,12 @@ ct U MENU_STATE_COLOR = 2
 ct U MENU_STATE_GO_TO_GAME = 3
 ct U MENU_MIN = 0
 
-// Theme constants
+// Theme identifiers.
 ct U THEME_ARCADE = 0
 ct U THEME_SPACE = 1
 ct U THEME_RETRO = 2
 
-// Menu line start addresses (we write one line at a time)
+// Menu-line start addresses; one line is written per NMI.
 ct UU[8] MENU_LINE_ADDRESSES = UU[8](
     $21CC,  // line 1
     $21EC,  // line 2
@@ -180,7 +176,7 @@ ct CCC/menu_data[3] MENU_LINE_DATA = CCC/menu_data[3](
     @COLOR_SELECT_TILES
 )
 
-// Menu position arrays
+// Menu cursor positions.
 ct U[2] MENU_X_POSITIONS = U[2](86, 170)
 ct U[2] MENU_Y_POSITIONS_2 = U[2](138,154)
 ct U[3] MENU_Y_POSITIONS_3 = U[3](138, 154, 170)
@@ -189,7 +185,7 @@ ct U[6] MENU_Y_POSITIONS_6 = U[6](130, 138, 146, 154, 162, 170)
 // ============================================================================
 // PALETTES
 // ============================================================================
-// Mallet color palettes (6 players, 3 colors each)
+// Mallet color palettes: six colors with three entries each.
 ct U[21] COLOR_PALETTES = U[21](
     $16, $05, $07,  // MALLET_RED_PALETTE
     $12, $11, $01,  // MALLET_BLUE_PALETTE
@@ -200,7 +196,7 @@ ct U[21] COLOR_PALETTES = U[21](
     $2D, $00, $30   // REPLAY_GRAYSCALE_PALETTE
 )
 
-// Emphasis bits (can be cycled for flashing effects)
+// PPU emphasis bits for flashing effects.
 ct U[3] EMPHASIS_BITS = U[3](
     PPUMASK_EMPHASIZE_R,
     PPUMASK_EMPHASIZE_G,

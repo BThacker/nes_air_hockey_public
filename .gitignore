@@ -1,3 +1,8 @@
 nesfab-master/
+nesfab/*.exe
+nesfab/doc/
+nesfab/examples/
+nesfab/source1.8/
 *.mlb
 *.nes
+.vscode/settings.json

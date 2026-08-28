@@ -1,0 +1,162 @@
+// air_hockey_physics.fab — movement and collision simulation
+// Author: Brandon Thacker
+// License: MIT
+
+// ============================================================================
+// RINK COLLISIONS
+// ============================================================================
+fn collide_puck_rink()
+    if game_state.objects[PUCK].vel.x == 0 && game_state.objects[PUCK].vel.y == 0
+        return
+
+    if (
+        game_state.objects[PUCK].vel.x < 0
+        && is_colliding_rink(PUCK_RADIUS, PUCK, DIRECTION_LEFT)
+    )
+        game_state.objects[PUCK].pos.x = RINK_DIMENSIONS.left_x + PUCK_RADIUS + 1
+        game_state.objects[PUCK].vel.x = -game_state.objects[PUCK].vel.x
+        puf.play_sfx(3)
+
+    if (
+        game_state.objects[PUCK].vel.x > 0
+        && is_colliding_rink(PUCK_RADIUS, PUCK, DIRECTION_RIGHT)
+    )
+        game_state.objects[PUCK].pos.x = RINK_DIMENSIONS.right_x - PUCK_RADIUS - 1
+        game_state.objects[PUCK].vel.x = -game_state.objects[PUCK].vel.x
+        puf.play_sfx(3)
+
+    if game_state.objects[PUCK].vel.y < 0
+        // Only skip wall collision if puck is actually entering the goal
+        if (
+            game_state.objects[PUCK].pos.x.a > RINK_DIMENSIONS.left_net_x &&
+            game_state.objects[PUCK].pos.x.a < RINK_DIMENSIONS.right_net_x &&
+            game_state.objects[PUCK].pos.y.a <= RINK_DIMENSIONS.top_y + PUCK_RADIUS
+        )
+            return
+        if is_colliding_rink(PUCK_RADIUS, PUCK, DIRECTION_UP)
+            game_state.objects[PUCK].pos.y = RINK_DIMENSIONS.top_y + PUCK_RADIUS + 1
+            game_state.objects[PUCK].vel.y = -game_state.objects[PUCK].vel.y
+            puf.play_sfx(3)
+
+    if game_state.objects[PUCK].vel.y > 0
+        // Only skip wall collision if puck is actually entering the goal
+        if (
+            game_state.objects[PUCK].pos.x.a > RINK_DIMENSIONS.left_net_x &&
+            game_state.objects[PUCK].pos.x.a < RINK_DIMENSIONS.right_net_x &&
+            game_state.objects[PUCK].pos.y.a >= RINK_DIMENSIONS.bottom_y - PUCK_RADIUS
+        )
+            return
+        if is_colliding_rink(PUCK_RADIUS, PUCK, DIRECTION_DOWN)
+            game_state.objects[PUCK].pos.y = RINK_DIMENSIONS.bottom_y - PUCK_RADIUS - 1
+            game_state.objects[PUCK].vel.y = -game_state.objects[PUCK].vel.y
+            puf.play_sfx(3)
+
+fn is_colliding_rink(U rad, U object_idx, U direction) Bool
+    switch direction
+        case DIRECTION_LEFT
+            if game_state.objects[object_idx].pos.x.a - rad < RINK_DIMENSIONS.left_x
+                return true
+            break
+        case DIRECTION_RIGHT
+            if game_state.objects[object_idx].pos.x.a + rad > RINK_DIMENSIONS.right_x
+                return true
+            break
+        case DIRECTION_UP
+            if game_state.objects[object_idx].pos.y.a - rad < RINK_DIMENSIONS.top_y
+                return true
+            break
+        case DIRECTION_DOWN
+            if game_state.objects[object_idx].pos.y.a + rad > RINK_DIMENSIONS.bottom_y
+                return true
+            break
+        case DIRECTION_UP_CENTER
+            if game_state.objects[object_idx].pos.y.a - rad < RINK_DIMENSIONS.center_y
+                return true
+            break
+        case DIRECTION_DOWN_CENTER
+            if game_state.objects[object_idx].pos.y.a + rad > RINK_DIMENSIONS.center_y
+                return true
+            break
+    return false
+
+// ============================================================================
+// MALLET COLLISIONS
+// ============================================================================
+fn collide_puck_mallet(U idx)
+    S dx = S(game_state.objects[PUCK].pos.x.a - game_state.objects[idx].pos.x.a)
+    S dy = S(game_state.objects[PUCK].pos.y.a - game_state.objects[idx].pos.y.a)
+
+    if abs(dx) >= MALLET_DIAMETER || abs(dy) >= MALLET_DIAMETER
+        game_state.mallet_touching_puck[idx] = false
+        return
+
+    UU distance_squared = UU(dx*dx + dy*dy)
+    if distance_squared >= COLLISION_THRESHOLD
+        game_state.mallet_touching_puck[idx] = false
+        return
+
+    // A collision event begins only when contact starts. The physics loop runs
+    // five times per frame, so sustained overlap must not retrigger it.
+    if game_state.mallet_touching_puck[idx]
+        return
+
+    if (idx == PLAYER_2 && !two_player_mode) || attract_mode
+        drone_states[idx].hit_counter += 1
+    game_state.mallet_touching_puck[idx] = true
+
+    game_state.objects[idx].cooldown_timer = MALLET_COOLDOWN_TIMER
+
+    // Normal vector.
+    SF nx = SF(dx) >> 3
+    SF ny = SF(dy) >> 3
+
+    SF a_dot = SF(nx*game_state.objects[idx].vel.x + ny*game_state.objects[idx].vel.y)
+    SF b_dot = SF(nx*game_state.objects[PUCK].vel.x + ny*game_state.objects[PUCK].vel.y)
+    SF impulse = 0.0
+    if game_state.objects[idx].boosting
+        impulse = SF((a_dot - b_dot) * 2.0)
+    else
+        impulse = a_dot - b_dot
+
+    SF wx = SF(impulse*nx)
+    SF wy = SF(impulse*ny)
+
+    game_state.objects[PUCK].vel.x += wx
+    game_state.objects[PUCK].vel.y += wy
+
+    // Shift the puck out of the mallet to avoid repeated overlap.
+    game_state.objects[PUCK].pos.x += nx << 1
+    game_state.objects[PUCK].pos.y += ny << 1
+
+    U total_velocity = abs(game_state.objects[PUCK].vel.x.a) + abs(game_state.objects[PUCK].vel.y.a)
+    total_puck_velocity = total_velocity
+    if total_velocity >= 3
+        puf.play_sfx(2)
+    else if total_velocity >= 1.5
+        puf.play_sfx(1)
+    else
+        puf.play_sfx(0)
+
+    if idx != game_state.last_hit_puck_player
+        game_state.last_hit_puck_player = idx
+        game_state.last_hit_puck_counter = 0
+        game_state.last_hit_puck_position = Vector2U(
+            game_state.objects[PUCK].pos.x.a, game_state.objects[PUCK].pos.y.a
+        )
+    else
+        game_state.last_hit_puck_counter += 1
+
+// ============================================================================
+// MOVEMENT
+// ============================================================================
+fn apply_object_movement(U idx)
+    game_state.objects[idx].vel.x = clamp_sf(game_state.objects[idx].vel.x, -1.0, 1.0)
+    game_state.objects[idx].vel.y = clamp_sf(game_state.objects[idx].vel.y, -1.0, 1.0)
+
+    game_state.objects[idx].pos.x += game_state.objects[idx].vel.x
+    game_state.objects[idx].pos.y += game_state.objects[idx].vel.y
+
+// Friction is applied once per rendered frame.
+fn apply_friction_puck()
+    game_state.objects[PUCK].vel.x *= FRICTION
+    game_state.objects[PUCK].vel.y *= FRICTION
