@@ -10,15 +10,20 @@ ct U ONE_SECOND_FRAMES = 60              // 60 fps
 ct U THREE_SECONDS_FRAMES = 180          // 3 seconds at 60 fps
 ct U TWO_SECONDS_FRAMES = 120            // 2 seconds
 ct U FADE_PERIOD = 8                     // visual effects timing
-ct U IDLE_SECONDS_BEFORE_ATTRACT = 15  // Idle seconds before attract mode begins.
+ct U IDLE_SECONDS_BEFORE_ATTRACT = 4  // Idle seconds before attract mode begins.
 
 // ============================================================================
 // CORE GAME CONFIGURATION
 // ============================================================================
 ct U DEFAULT_SCORE_TO_WIN = 7            // Standard air hockey rules.
 ct U[3] SCORE_TO_WIN_OPTIONS = U[3](3, 5, 7)
-ct U STUCK_PUCK_HIT_MAX = 25             // Repeated nearby hits indicate a trapped puck.
+ct U STUCK_PUCK_HIT_MAX = 7             // Repeated nearby hits indicate a trapped puck.
 ct U STUCK_PUCK_HIT_DISTANCE = 10
+
+// Attract-mode background label positions in the rink side margins.
+ct UU ATTRACT_DEMO_ADDR = $21C1
+ct UU ATTRACT_PRESS_ADDR = $21B9
+ct UU ATTRACT_START_ADDR = $21F9
 
 // ============================================================================
 // PHYSICS & SIMULATION

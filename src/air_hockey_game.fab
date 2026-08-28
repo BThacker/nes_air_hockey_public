@@ -7,6 +7,8 @@
 // ============================================================================
 vars /air_hockey_game
     GameState game_state
+    U attract_prompt_counter
+    Bool attract_prompt_visible
 
 // Settings preserved when modes change.
 vars /game_settings
@@ -20,20 +22,53 @@ vars /game_settings
 // ============================================================================
 // INIT
 // ============================================================================
+fn set_attract_prompt(Bool visible)
+    if !attract_mode
+        return
+
+    if visible
+        write_vram_h(ATTRACT_DEMO_ADDR, 0, 4, @ATTRACT_DEMO_TILES)
+        write_vram_h(ATTRACT_PRESS_ADDR, 0, 5, @ATTRACT_PRESS_TILES)
+        write_vram_h(ATTRACT_START_ADDR, 0, 5, @ATTRACT_START_TILES)
+    else
+        write_vram_h(ATTRACT_DEMO_ADDR, 0, 4, @ATTRACT_BLANK_TILES)
+        write_vram_h(ATTRACT_PRESS_ADDR, 0, 5, @ATTRACT_BLANK_TILES)
+        write_vram_h(ATTRACT_START_ADDR, 0, 5, @ATTRACT_BLANK_TILES)
+
+fn init_attract_prompt()
+    attract_prompt_counter = 0
+    attract_prompt_visible = true
+    set_attract_prompt(attract_prompt_visible)
+
+fn update_attract_prompt()
+    if !attract_mode
+        return
+
+    attract_prompt_counter += 1
+    if attract_prompt_counter < ONE_SECOND_FRAMES
+        return
+
+    attract_prompt_counter = 0
+    attract_prompt_visible = !attract_prompt_visible
+    set_attract_prompt(attract_prompt_visible)
+
 fn init_theme()
     ppu_reset_addr($2000)
     switch theme
         case THEME_ARCADE
             ppu_upload_rlz(@gamefield_arcade)
+            init_attract_prompt()
             fade_in_black(FADE_PERIOD, @gamefield_palette_arcade)
             break
         case THEME_SPACE
             init_space_bg()
             ppu_upload_rlz(@gamefield_space)
+            init_attract_prompt()
             fade_in_black(FADE_PERIOD, @gamefield_palette_space)
             break
         case THEME_RETRO
             ppu_upload_rlz(@gamefield_retro)
+            init_attract_prompt()
             fade_in_black(FADE_PERIOD, @gamefield_palette_retro)
             break
     change_object_palette(false)
@@ -421,6 +456,7 @@ fn update_sprites_notify(PPP/sprites metaspr, U existing_o)
 nmi air_hockey_game_nmi()
     ppu_upload_oam_poll_pads(0)
     ppu_upload_palette()
+    update_attract_prompt()
     ppu_reset_scroll(0, 0)
 
     if puf.process(PUF_DEFAULT)
