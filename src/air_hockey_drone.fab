@@ -12,6 +12,27 @@ fn handle_drone_mallet(U player)
     update_ai_state(player)
     execute_ai_behavior(player)
 
+fn get_active_ai_difficulty() U
+    // Keep attract mode consistent regardless of the last one-player selection.
+    if attract_mode
+        return AI_DIFFICULTY_NORMAL
+    return ai_difficulty
+
+fn get_ai_normal_speed() UF
+    if get_active_ai_difficulty() == AI_DIFFICULTY_EASY
+        return 0.35
+    return MALLET_SPEED_NORMAL
+
+fn get_ai_boost_speed() UF
+    if get_active_ai_difficulty() == AI_DIFFICULTY_EASY
+        return 0.75
+    return MALLET_SPEED_BOOST
+
+fn set_drone_target(U player, UF target_x, UF target_y, U tolerance, UF speed)
+    drone_states[player].target = Vector2UF(target_x, target_y)
+    drone_states[player].target_tolerance = tolerance
+    drone_states[player].target_speed = speed
+
 fn update_ai_state(U player)
     if drone_states[player].can_start_counter > 0
         drone_states[player].can_start_counter -= 1
@@ -20,8 +41,9 @@ fn update_ai_state(U player)
     if game_state.objects[player].cooldown_timer > 0
         game_state.objects[player].cooldown_timer -= 1
 
-    if drone_states[player].hit_counter > AI_HIT_THRESHOLD
-        drone_states[player].backoff_counter = AI_BACKOFF_DURATION
+    U difficulty = get_active_ai_difficulty()
+    if drone_states[player].hit_counter > AI_HIT_THRESHOLDS[difficulty]
+        drone_states[player].backoff_counter = AI_BACKOFF_DURATIONS[difficulty]
         drone_states[player].hit_counter = 0
 
     if drone_states[player].backoff_counter > 0
@@ -46,8 +68,22 @@ fn execute_ai_behavior(U player)
 
     if drone_states[player].backoff_counter > 0
         execute_backoff_behavior(player)
-        return
+    else if drone_states[player].reaction_counter > 0
+        drone_states[player].reaction_counter -= 1
+    else
+        U difficulty = get_active_ai_difficulty()
+        drone_states[player].reaction_counter = AI_REACTION_FRAMES[difficulty]
+        update_drone_target(player)
 
+    move_drone_mallet_to_target(
+        player,
+        drone_states[player].target.x,
+        drone_states[player].target.y,
+        drone_states[player].target_tolerance,
+        drone_states[player].target_speed
+        )
+
+fn update_drone_target(U player)
     Bool puck_on_ai_side
     Bool puck_approaching_goal
     Bool puck_moving_away_from_goal
@@ -78,10 +114,11 @@ fn execute_ai_behavior(U player)
         abs(game_state.objects[PUCK].vel.x) < 2.0 && abs(game_state.objects[PUCK].vel.y) < 0.7
         )
 
+    U difficulty = get_active_ai_difficulty()
     UF distance_to_puck = (
         abs(game_state.objects[player].pos.x.a - game_state.objects[PUCK].pos.x.a)
         + abs(game_state.objects[player].pos.y.a - game_state.objects[PUCK].pos.y.a))
-    Bool close_to_puck = distance_to_puck < AI_CLOSE_DISTANCE_THRESHOLD
+    Bool close_to_puck = distance_to_puck < AI_CLOSE_DISTANCE_THRESHOLDS[difficulty]
 
     if puck_approaching_goal && !puck_slow_or_stationary_or_horizontal
         execute_defensive_behavior(player)
@@ -101,20 +138,20 @@ fn execute_ai_behavior(U player)
 
 fn execute_defensive_behavior(U player)
     UF target_x = get_goal_target_x()
-    move_drone_mallet_to_target(player, target_x, get_home_target_y(player), 5, MALLET_SPEED_BOOST)
+    set_drone_target(player, target_x, get_home_target_y(player), 5, get_ai_boost_speed())
 
 fn execute_aggressive_behavior(U player, Bool close_to_puck, Bool puck_slow_or_stationary_or_horizontal)
     Vector2UF target = predict_puck_position(player)
-    UF speed = MALLET_SPEED_NORMAL
+    UF speed = get_ai_normal_speed()
 
     if close_to_puck || puck_slow_or_stationary_or_horizontal
-        speed = MALLET_SPEED_BOOST
+        speed = get_ai_boost_speed()
 
-    move_drone_mallet_to_target(player, target.x, target.y, 3, speed)
+    set_drone_target(player, target.x, target.y, 3, speed)
 
 fn execute_counter_attack_behavior(U player)
     Vector2UF target = predict_puck_position(player)
-    move_drone_mallet_to_target(player, target.x, target.y, 4, MALLET_SPEED_BOOST)
+    set_drone_target(player, target.x, target.y, 4, get_ai_boost_speed())
 
 fn execute_neutral_behavior(U player)
     if (
@@ -126,11 +163,11 @@ fn execute_neutral_behavior(U player)
 
     UF target_x = UF(SF(RINK_DIMENSIONS.center_x) + drone_states[player].idle_offset_x)
     UF target_y = get_idle_target_y(player, drone_states[player].idle_offset_y)
-    move_drone_mallet_to_target(player, target_x, target_y, 3, MALLET_SPEED_NORMAL)
+    set_drone_target(player, target_x, target_y, 3, get_ai_normal_speed())
 
 fn execute_backoff_behavior(U player)
     UF target_x = get_goal_target_x()
-    move_drone_mallet_to_target(player, target_x, get_home_target_y(player), 5, MALLET_SPEED_BOOST)
+    set_drone_target(player, target_x, get_home_target_y(player), 5, get_ai_boost_speed())
 
 fn get_goal_target_x() UF
     if game_state.objects[PUCK].pos.x.a < RINK_DIMENSIONS.left_net_x
@@ -151,16 +188,21 @@ fn get_idle_target_y(U player, SF idle_offset_y) UF
 
 fn predict_puck_position(U player) Vector2UF
     Vector2UF target = game_state.objects[PUCK].pos
+    U difficulty = get_active_ai_difficulty()
 
     if abs(game_state.objects[PUCK].vel.x) > 0.5 || abs(game_state.objects[PUCK].vel.y) > 0.5
-        target.x += game_state.objects[PUCK].vel.x * AI_PREDICTION_FRAMES
-        target.y += game_state.objects[PUCK].vel.y * AI_PREDICTION_FRAMES
+        target.x += game_state.objects[PUCK].vel.x * AI_PREDICTION_FRAMES[difficulty]
+        target.y += game_state.objects[PUCK].vel.y * AI_PREDICTION_FRAMES[difficulty]
 
-    target.x += rand_range(1, 5) - 2
+    U aim_error = AI_AIM_ERRORS[difficulty]
+    U vertical_aim_max = aim_error + 2
+    if aim_error > 0
+        U aim_error_range = (aim_error << 1) + 1
+        target.x += rand_range(1, aim_error_range) - aim_error
     if player == PLAYER_2
-        target.y -= rand_range(2,4)
+        target.y -= rand_range(2, vertical_aim_max)
     else
-        target.y += rand_range(2,4)
+        target.y += rand_range(2, vertical_aim_max)
 
     if target.y < AI_MIN_Y
         target.y = AI_MIN_Y

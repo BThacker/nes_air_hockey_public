@@ -287,6 +287,18 @@ data /menu_data
         ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
         ' ', '7', ' ', 'G', 'O', 'A', 'L', 'S')
 
+    // One-player difficulty selection text.
+    [] DIFFICULTY_SELECT_TILES
+        U[](
+        ' ', 'S', 'K', 'I', 'L', 'L', ' ', ' ',
+        '-', '-', '-', '-', '-', '-', '-', '-',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', 'E', 'A', 'S', 'Y', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', 'N', 'O', 'R', 'M', 'A', 'L', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', 'H', 'A', 'R', 'D', ' ', ' ', ' ')
+
     // Theme-selection screen text.
     [] THEME_SELECT_TILES
         U[](

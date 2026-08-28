@@ -6,6 +6,7 @@ All notable changes to Air Hockey - NES are documented here.
 
 ### Added
 
+- Easy, Normal, and Hard one-player AI difficulty selection.
 - Configurable first-to-3, first-to-5, or first-to-7 match length.
 - A flashing `DEMO / PRESS START` prompt for attract mode.
 - macOS debug builds with Mesen label output.

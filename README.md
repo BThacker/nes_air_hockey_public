@@ -31,6 +31,7 @@ A classic air hockey game built for the Nintendo Entertainment System (NES) usin
 - **Authentic Air Hockey Physics**: Realistic puck movement with friction simulation and advanced collision detection
 - **Two-Player Support**: Play against a friend or challenge the AI
 - **Intelligent AI Opponent**: Advanced AI with multiple behavioral states (defensive, aggressive, counter-attack, neutral, backoff)
+- **AI Difficulty Selection**: Choose Easy, Normal, or Hard for one-player matches
 - **Configurable Match Length**: Choose first to 3, 5, or 7 goals (default: 7)
 - **Replay System**: Watch roughly 0.4 seconds of gameplay replayed as a two-second 5× slow-motion highlight after each goal
 

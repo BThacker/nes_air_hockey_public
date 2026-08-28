@@ -70,7 +70,13 @@ fn enter_state_main_menu(U new_state)
             if !two_player_mode
                 player_menu_selection[PLAYER_2] = randb(5)
             break
+        case MENU_STATE_DIFFICULTY
+            menu_max = 2
+            player_menu_selection[PLAYER_1] = AI_DIFFICULTY_NORMAL
+            break
         case MENU_STATE_SCORE_TO_WIN
+            if !two_player_mode
+                ai_difficulty = player_menu_selection[PLAYER_1]
             menu_max = 2
             player_menu_selection[PLAYER_1] = 2
             break
@@ -95,6 +101,8 @@ fn handle_input_main_menu(U player)
     if player == PLAYER_1 && pads[player].pressed & (BUTTON_START | BUTTON_B)
         puf.play_sfx(7)
         menu_state += 1
+        if menu_state == MENU_STATE_DIFFICULTY && two_player_mode
+            menu_state += 1
         enter_state_main_menu(menu_state)
 
     if player == PLAYER_1 && menu_state != MENU_STATE_TYPE && pads[player].pressed & BUTTON_A
@@ -125,7 +133,7 @@ fn update_main_menu()
     rand()
     update_pads()
     switch menu_state
-        case MENU_STATE_TYPE case MENU_STATE_THEME case MENU_STATE_SCORE_TO_WIN
+        case MENU_STATE_TYPE case MENU_STATE_THEME case MENU_STATE_DIFFICULTY case MENU_STATE_SCORE_TO_WIN
             handle_input_main_menu(PLAYER_1)
             break
         case MENU_STATE_COLOR
@@ -192,7 +200,7 @@ fn update_sprite_main_menu()
                 $00
                 )
             break
-        case MENU_STATE_THEME
+        case MENU_STATE_THEME case MENU_STATE_DIFFICULTY
             o = push_oam_metasprite_a(
                 o,
                 MENU_X_POSITIONS[0],

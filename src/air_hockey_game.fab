@@ -17,6 +17,7 @@ vars /game_settings
     U theme = THEME_ARCADE
     U[3] p1_color
     U[3] p2_color
+    U ai_difficulty = AI_DIFFICULTY_NORMAL
     U score_to_win = DEFAULT_SCORE_TO_WIN
 
 // ============================================================================
@@ -86,8 +87,12 @@ fn init_game_objects()
     game_state.objects[PLAYER_1] = PhysicsObject(MALLET_P1_START, VEL_ZERO, false, @mallet_metasprite_p1, 0)
     game_state.objects[PLAYER_2] = PhysicsObject(MALLET_P2_START, VEL_ZERO, false, @mallet_metasprite_p2, 0)
     game_state.objects[PUCK] = PhysicsObject(PUCK_START_P1, VEL_ZERO, false, @puck_metasprite, 0)
-    drone_states[PLAYER_1] = DroneState(0, 0, 0, THREE_SECONDS_FRAMES, 0, 0)
-    drone_states[PLAYER_2] = DroneState(0, 0, 0, THREE_SECONDS_FRAMES, 0, 0)
+    drone_states[PLAYER_1] = DroneState(
+        0, 0, 0, THREE_SECONDS_FRAMES, 0, 0, 0, Vector2UF(128, 120), 5, MALLET_SPEED_NORMAL
+        )
+    drone_states[PLAYER_2] = DroneState(
+        0, 0, 0, THREE_SECONDS_FRAMES, 0, 0, 0, Vector2UF(128, 120), 5, MALLET_SPEED_NORMAL
+        )
 
 fn reset_round(U serving_player)
     game_state.objects[PUCK].vel = VEL_ZERO

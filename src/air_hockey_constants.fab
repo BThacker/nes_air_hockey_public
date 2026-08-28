@@ -133,10 +133,15 @@ ct Vector2UF[16] CLOSE_STAR_POSITIONS = Vector2UF[16](
 // ============================================================================
 // AI SYSTEM
 // ============================================================================
-ct U AI_HIT_THRESHOLD = 5
-ct U AI_BACKOFF_DURATION = 30
-ct U AI_PREDICTION_FRAMES = 8
-ct U AI_CLOSE_DISTANCE_THRESHOLD = 40
+ct U AI_DIFFICULTY_EASY = 0
+ct U AI_DIFFICULTY_NORMAL = 1
+ct U AI_DIFFICULTY_HARD = 2
+ct U[3] AI_REACTION_FRAMES = U[3](5, 0, 0)
+ct U[3] AI_PREDICTION_FRAMES = U[3](3, 8, 12)
+ct U[3] AI_CLOSE_DISTANCE_THRESHOLDS = U[3](24, 40, 56)
+ct U[3] AI_HIT_THRESHOLDS = U[3](3, 5, 7)
+ct U[3] AI_BACKOFF_DURATIONS = U[3](60, 30, 15)
+ct U[3] AI_AIM_ERRORS = U[3](6, 2, 0)
 ct U AI_MIN_Y = RINK_DIMENSIONS.top_y + 3      // Accounts for sprite offset.
 ct U AI_MAX_Y = RINK_DIMENSIONS.bottom_y - 4
 
@@ -156,8 +161,9 @@ ct Vector2U NOTIFY_SPRITE_POS = Vector2U(128, 150)   // Pause and status indicat
 ct U MENU_STATE_TYPE = 0
 ct U MENU_STATE_THEME = 1
 ct U MENU_STATE_COLOR = 2
-ct U MENU_STATE_SCORE_TO_WIN = 3
-ct U MENU_STATE_GO_TO_GAME = 4
+ct U MENU_STATE_DIFFICULTY = 3
+ct U MENU_STATE_SCORE_TO_WIN = 4
+ct U MENU_STATE_GO_TO_GAME = 5
 ct U MENU_MIN = 0
 
 // Theme identifiers.
@@ -177,10 +183,11 @@ ct UU[8] MENU_LINE_ADDRESSES = UU[8](
     $22AC   // line 8
 )
 
-ct CCC/menu_data[4] MENU_LINE_DATA = CCC/menu_data[4](
+ct CCC/menu_data[5] MENU_LINE_DATA = CCC/menu_data[5](
     @PLAYER_SELECT_TILES,
     @THEME_SELECT_TILES,
     @COLOR_SELECT_TILES,
+    @DIFFICULTY_SELECT_TILES,
     @SCORE_TO_WIN_SELECT_TILES
 )
 

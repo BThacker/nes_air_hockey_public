@@ -50,6 +50,10 @@ struct DroneState
     U idle_frame_counter
     SF idle_offset_x
     SF idle_offset_y
+    U reaction_counter
+    Vector2UF target
+    U target_tolerance
+    UF target_speed
 
 struct LogoRinkBounds
     U left_x
