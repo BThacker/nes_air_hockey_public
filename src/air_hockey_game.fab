@@ -15,6 +15,7 @@ vars /game_settings
     U theme = THEME_ARCADE
     U[3] p1_color
     U[3] p2_color
+    U score_to_win = DEFAULT_SCORE_TO_WIN
 
 // ============================================================================
 // INIT
@@ -194,9 +195,9 @@ fn evaluate_player_scored() U
 
 // Returns the winning player, or NONE.
 fn evaluate_game_over() U
-    if game_state.player1_score >= SCORE_TO_WIN
+    if game_state.player1_score >= score_to_win
         return PLAYER_1
-    else if game_state.player2_score >= SCORE_TO_WIN
+    else if game_state.player2_score >= score_to_win
         return PLAYER_2
     return NONE
 
@@ -353,7 +354,7 @@ fn update_sprites_gameplay()
         o,
             SCORE_TO_WIN_POS.x,
             SCORE_TO_WIN_POS.y,
-            SCORE_TO_WIN + NUMBER_SPRITES_START,
+            score_to_win + NUMBER_SPRITES_START,
             $02
         )
 
@@ -400,7 +401,7 @@ fn update_sprites_notify(PPP/sprites metaspr, U existing_o)
         o,
         SCORE_TO_WIN_POS.x,
         SCORE_TO_WIN_POS.y,
-        SCORE_TO_WIN + NUMBER_SPRITES_START,
+        score_to_win + NUMBER_SPRITES_START,
         $02
         )
     if theme == THEME_ARCADE

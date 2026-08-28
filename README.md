@@ -31,7 +31,7 @@ A classic air hockey game built for the Nintendo Entertainment System (NES) usin
 - **Authentic Air Hockey Physics**: Realistic puck movement with friction simulation and advanced collision detection
 - **Two-Player Support**: Play against a friend or challenge the AI
 - **Intelligent AI Opponent**: Advanced AI with multiple behavioral states (defensive, aggressive, counter-attack, neutral, backoff)
-- **Score Tracking**: First to 7 goals wins (standard air hockey rules)
+- **Configurable Match Length**: Choose first to 3, 5, or 7 goals (default: 7)
 - **Replay System**: Watch roughly 0.4 seconds of gameplay replayed as a two-second 5× slow-motion highlight after each goal
 
 ### Visual Themes
@@ -70,7 +70,7 @@ A classic air hockey game built for the Nintendo Entertainment System (NES) usin
 This project requires [NESFab 1.8](https://github.com/pubby/nesfab/releases/tag/v1.8). Place the NESFab executable and source distribution in `nesfab/` as described in [nesfab/README.md](nesfab/README.md).
 
 - Windows: run `build.bat` from the repository root. If Mesen is not on `PATH`, set `MESEN_PATH` to its executable path to launch the ROM automatically.
-- macOS: install Wine and Mesen, then run `bash build_macos.sh` from the repository root.
+- macOS: install Wine and Mesen, then run `bash build_macos.sh` from the repository root. Run `bash build_macos.sh debug` to also generate `air_hockey_rev1_1.mlb` labels for Mesen debugging.
 - The build produces `air_hockey_rev1_1.nes`, which runs on original NROM-compatible hardware and common NES emulators.
 
 ### Source Formatting

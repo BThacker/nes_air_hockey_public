@@ -5,8 +5,8 @@
 vars /main_menu
     U finished_loading = false
     U menu_state = 0
-    U[2] player_menu_selection = U[2](0, 0)
     U menu_max = 1
+    U[2] player_menu_selection = U[2](0, 0)
     Bool update_menu_graphics = false
     U ppu_scroll_x = 255
     U menu_tiles_loop_counter = 0
@@ -59,8 +59,8 @@ fn enter_state_main_menu(U new_state)
         case MENU_STATE_TYPE
             break
         case MENU_STATE_THEME
-            menu_max = 2
             two_player_mode = player_menu_selection[PLAYER_1]
+            menu_max = 2
             player_menu_selection[PLAYER_1] = 0
             break
         case MENU_STATE_COLOR
@@ -70,7 +70,12 @@ fn enter_state_main_menu(U new_state)
             if !two_player_mode
                 player_menu_selection[PLAYER_2] = randb(5)
             break
+        case MENU_STATE_SCORE_TO_WIN
+            menu_max = 2
+            player_menu_selection[PLAYER_1] = 2
+            break
         case MENU_STATE_GO_TO_GAME
+            score_to_win = SCORE_TO_WIN_OPTIONS[player_menu_selection[PLAYER_1]]
             update_menu_graphics = false
             fade_out_go_to_game()
             break
@@ -120,12 +125,13 @@ fn update_main_menu()
     rand()
     update_pads()
     switch menu_state
-        case MENU_STATE_TYPE case MENU_STATE_THEME
+        case MENU_STATE_TYPE case MENU_STATE_THEME case MENU_STATE_SCORE_TO_WIN
             handle_input_main_menu(PLAYER_1)
             break
         case MENU_STATE_COLOR
             handle_input_main_menu(PLAYER_1)
-            handle_input_main_menu(PLAYER_2)
+            if two_player_mode
+                handle_input_main_menu(PLAYER_2)
             break
     animate_logo()
     update_sprite_main_menu()
@@ -211,13 +217,21 @@ fn update_sprite_main_menu()
                     $01
                     )
             else
-                o = push_oam(
+                o = push_oam_metasprite(
                     o,
-                    MENU_X_POSITIONS[1] - 4,
-                    MENU_Y_POSITIONS_6[player_menu_selection[PLAYER_2]] - 4,
-                    $60,
-                    $02
+                    MENU_X_POSITIONS[1],
+                    MENU_Y_POSITIONS_6[player_menu_selection[PLAYER_2]],
+                    @ai_metasprite
                     )
+            break
+        case MENU_STATE_SCORE_TO_WIN
+            o = push_oam_metasprite_a(
+                o,
+                MENU_X_POSITIONS[0],
+                MENU_Y_POSITIONS_3[player_menu_selection[PLAYER_1]],
+                @menu_mallet_metasprite,
+                $00
+                )
             break
     hide_oam(o)
 
@@ -257,6 +271,7 @@ nmi main_menu_nmi()
 // ============================================================================
 // MODE main() entry point
 // ============================================================================
+// Transitions here preserve no variable groups, so menu globals use their declared defaults.
 mode main()
 : nmi main_menu_nmi
     init_main_menu()

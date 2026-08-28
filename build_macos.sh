@@ -1,12 +1,34 @@
 #!/bin/bash
-rm -f air_hockey_rev1_1.nes
-wine ./nesfab/nesfab_legal.exe air_hockey.cfg
 
-# Check if build was successful
-if [ -f "air_hockey_rev1_1.nes" ]; then
-    echo "Build successful! Launching Mesen emulator..."
-    open -a "Mesen" --args /Users/bthacker/Documents/dev/nes/nes_air_hockey_public/air_hockey_rev1_1.nes
-else
-    echo "Build failed - air_hockey_rev1_1.nes not found"
+rom_name="air_hockey_rev1_1.nes"
+labels_name="air_hockey_rev1_1.mlb"
+compiler_args=(air_hockey.cfg)
+
+case "${1:-}" in
+    "")
+        rm -f "$labels_name"
+        ;;
+    debug)
+        compiler_args+=(--mlb "$labels_name")
+        ;;
+    *)
+        echo "Usage: bash build_macos.sh [debug]"
+        exit 2
+        ;;
+esac
+
+rm -f "$rom_name"
+wine ./nesfab/nesfab_legal.exe "${compiler_args[@]}"
+
+if [ ! -f "$rom_name" ]; then
+    echo "Build failed - $rom_name not found"
     exit 1
 fi
+
+if [ "${1:-}" = "debug" ]; then
+    echo "Debug build successful! Mesen labels: $labels_name"
+else
+    echo "Build successful!"
+fi
+
+open -a "Mesen" --args "$PWD/$rom_name"

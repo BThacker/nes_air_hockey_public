@@ -15,7 +15,8 @@ ct U IDLE_SECONDS_BEFORE_ATTRACT = 15  // Idle seconds before attract mode begin
 // ============================================================================
 // CORE GAME CONFIGURATION
 // ============================================================================
-ct U SCORE_TO_WIN = 7                    // Standard air hockey rules.
+ct U DEFAULT_SCORE_TO_WIN = 7            // Standard air hockey rules.
+ct U[3] SCORE_TO_WIN_OPTIONS = U[3](3, 5, 7)
 ct U STUCK_PUCK_HIT_MAX = 25             // Repeated nearby hits indicate a trapped puck.
 ct U STUCK_PUCK_HIT_DISTANCE = 10
 
@@ -150,7 +151,8 @@ ct Vector2U NOTIFY_SPRITE_POS = Vector2U(128, 150)   // Pause and status indicat
 ct U MENU_STATE_TYPE = 0
 ct U MENU_STATE_THEME = 1
 ct U MENU_STATE_COLOR = 2
-ct U MENU_STATE_GO_TO_GAME = 3
+ct U MENU_STATE_SCORE_TO_WIN = 3
+ct U MENU_STATE_GO_TO_GAME = 4
 ct U MENU_MIN = 0
 
 // Theme identifiers.
@@ -170,10 +172,11 @@ ct UU[8] MENU_LINE_ADDRESSES = UU[8](
     $22AC   // line 8
 )
 
-ct CCC/menu_data[3] MENU_LINE_DATA = CCC/menu_data[3](
+ct CCC/menu_data[4] MENU_LINE_DATA = CCC/menu_data[4](
     @PLAYER_SELECT_TILES,
     @THEME_SELECT_TILES,
-    @COLOR_SELECT_TILES
+    @COLOR_SELECT_TILES,
+    @SCORE_TO_WIN_SELECT_TILES
 )
 
 // Menu cursor positions.

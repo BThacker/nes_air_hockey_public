@@ -151,6 +151,10 @@ data /sprites
             Ms(-8,  0, $13, $00),
             Ms(  0,  0, $13, ATTR_H_FLIP))))
 
+    [] ai_metasprite
+        (make_metasprite(0, Ms{}(
+            Ms(-4, -4, $60, $02))))
+
     [] paused_metasprite
         (make_metasprite(0, Ms{}(
             Ms(-24, -64, "P"spr[0], $02),
@@ -251,6 +255,18 @@ data /menu_data
         '2', ' ', 'P', 'L', 'A', 'Y', 'E', 'R',
         ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
         ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ')
+
+    // Match-length selection screen text.
+    [] SCORE_TO_WIN_SELECT_TILES
+        U[](
+        ' ', 'S', 'C', 'O', 'R', 'E', ' ', ' ',
+        '-', '-', '-', '-', '-', '-', '-', '-',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', '3', ' ', 'G', 'O', 'A', 'L', 'S',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', '5', ' ', 'G', 'O', 'A', 'L', 'S',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', '7', ' ', 'G', 'O', 'A', 'L', 'S')
 
     // Theme-selection screen text.
     [] THEME_SELECT_TILES
