@@ -17,7 +17,7 @@ ct U IDLE_SECONDS_BEFORE_ATTRACT = 10  // Idle seconds before attract mode begin
 // ============================================================================
 ct U DEFAULT_SCORE_TO_WIN = 7            // Standard air hockey rules.
 ct U[3] SCORE_TO_WIN_OPTIONS = U[3](3, 5, 7)
-ct U STUCK_PUCK_HIT_MAX = 7             // Repeated nearby hits indicate a trapped puck.
+ct U STUCK_PUCK_HIT_MAX = 25             // Repeated nearby hits indicate a trapped puck.
 ct U STUCK_PUCK_HIT_DISTANCE = 10
 
 // Attract-mode background label positions in the rink side margins.

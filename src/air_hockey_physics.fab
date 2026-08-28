@@ -95,12 +95,12 @@ fn collide_puck_mallet(U idx)
         game_state.mallet_touching_puck[idx] = false
         return
 
-    // A collision event begins only when contact starts. The physics loop runs
-    // five times per frame, so sustained overlap must not retrigger it.
-    if game_state.mallet_touching_puck[idx]
-        return
-
-    if (idx == PLAYER_2 && !two_player_mode) || attract_mode
+    // Keep AI hit counting to one event per contact, but resolve impact on
+    // every overlapping physics tick for the original collision response.
+    if (
+        !game_state.mallet_touching_puck[idx]
+        && ((idx == PLAYER_2 && !two_player_mode) || attract_mode)
+        )
         drone_states[idx].hit_counter += 1
     game_state.mallet_touching_puck[idx] = true
 
