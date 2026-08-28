@@ -181,7 +181,7 @@ fn update_sprite_main_menu()
     o = push_oam(o, 92, 41, $B1, $02)
     o = push_oam(o, 92, 35, $B2, $02)
     o = push_oam(o, 92, 48, $B2, $02)
-    o = push_oam_metasprite(o, 128, 188, @release_metasprite)
+    o = push_oam_metasprite(o, 228, 212, @release_metasprite)
     switch menu_state
         case MENU_STATE_TYPE
             o = push_oam_metasprite_a(

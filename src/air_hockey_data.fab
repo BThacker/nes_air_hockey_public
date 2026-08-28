@@ -158,11 +158,11 @@ data /sprites
     // Title-screen release identifier: REV 1A.
     [] release_metasprite
         (make_metasprite(0, Ms{}(
-            Ms(-24, 0, "R"spr[0], $02),
-            Ms(-16, 0, "E"spr[0], $02),
-            Ms( -8, 0, "V"spr[0], $02),
-            Ms(  8, 0, "1"spr[0], $02),
-            Ms( 24, 0, "A"spr[0], $02))))
+            Ms(-20, 0, "R"spr[0], $02),
+            Ms(-12, 0, "E"spr[0], $02),
+            Ms( -4, 0, "V"spr[0], $02),
+            Ms( 12, 0, "1"spr[0], $02),
+            Ms( 20, 0, "A"spr[0], $02))))
 
     [] paused_metasprite
         (make_metasprite(0, Ms{}(
