@@ -1,0 +1,297 @@
+// air_hockey_main_menu.fab — application entry point, title screen, and menu
+// Author: Brandon Thacker
+// License: MIT
+
+vars /main_menu
+    U finished_loading = false
+    U menu_state = 0
+    U menu_max = 1
+    U[2] player_menu_selection = U[2](0, 0)
+    Bool update_menu_graphics = false
+    U ppu_scroll_x = 255
+    U menu_tiles_loop_counter = 0
+    U idle_attract_frame_counter = 0
+    U idle_attract_seconds_counter = 0
+    AnimObject logo_puck
+    AnimObject logo_mallet_1
+    AnimObject logo_mallet_2
+
+// ============================================================================
+// INITIALIZATION
+// ============================================================================
+fn init_logo()
+    logo_puck = AnimObject(Vector2UF(92, 41), Vector2SF(0.10, 0.10), $A1)
+    logo_mallet_1 = AnimObject(Vector2UF(78, 37), Vector2SF(0, 0.10), $A0)
+    logo_mallet_2 = AnimObject(Vector2UF(104, 45), Vector2SF(0, 0.10), $A0)
+
+fn scroll_title()
+    if ppu_scroll_x > 0
+        ppu_scroll_x -= 5
+        return
+    finished_loading = true
+    update_menu_graphics = true
+
+fn init_main_menu()
+    {PPUCTRL}(0)
+    {PPUMASK}(0)
+    // OAM is undefined after a hardware reset; blank it before the first DMA.
+    hide_oam(0)
+    // Attract mode preserves game settings so its next theme can be selected.
+    attract_mode = false
+    ppu_reset_scroll(ppu_scroll_x, 0)
+    load_palette(@main_menu_palette)
+    {PPUSTATUS}()
+    ppu_reset_addr($2000)
+    ppu_upload_rlz(@main_title)
+    {PPUCTRL}(PPUCTRL_NMI_ON | PPUCTRL_BG_PT_1000)
+    puf.init(system)
+    puf.play_track(puf_track_title)
+
+    while !finished_loading
+        scroll_title()
+        nmi
+
+    init_logo()
+    enter_state_main_menu(MENU_STATE_TYPE)
+
+// ============================================================================
+// MENU INPUT AND FLOW
+// ============================================================================
+fn enter_state_main_menu(U new_state)
+    update_menu_graphics = true
+    switch new_state
+        case MENU_STATE_TYPE
+            break
+        case MENU_STATE_THEME
+            two_player_mode = player_menu_selection[PLAYER_1]
+            menu_max = 2
+            player_menu_selection[PLAYER_1] = 0
+            break
+        case MENU_STATE_COLOR
+            theme = player_menu_selection[PLAYER_1]
+            menu_max = 5
+            player_menu_selection[PLAYER_1] = 0
+            if !two_player_mode
+                player_menu_selection[PLAYER_2] = randb(6)
+            break
+        case MENU_STATE_DIFFICULTY
+            menu_max = 2
+            player_menu_selection[PLAYER_1] = AI_DIFFICULTY_NORMAL
+            break
+        case MENU_STATE_SCORE_TO_WIN
+            if !two_player_mode
+                ai_difficulty = player_menu_selection[PLAYER_1]
+            menu_max = 2
+            player_menu_selection[PLAYER_1] = 2
+            break
+        case MENU_STATE_GO_TO_GAME
+            score_to_win = SCORE_TO_WIN_OPTIONS[player_menu_selection[PLAYER_1]]
+            update_menu_graphics = false
+            fade_out_go_to_game()
+            break
+
+fn handle_input_main_menu(U player)
+    if pads[player].pressed || pads[1].pressed
+        idle_attract_frame_counter = 0
+        idle_attract_seconds_counter = 0
+
+    if pads[player].pressed & BUTTON_UP && player_menu_selection[player] > MENU_MIN
+        player_menu_selection[player] -= 1
+        puf.play_sfx(6)
+    if pads[player].pressed & BUTTON_DOWN && player_menu_selection[player] < menu_max
+        player_menu_selection[player] += 1
+        puf.play_sfx(6)
+
+    if player == PLAYER_1 && pads[player].pressed & (BUTTON_START | BUTTON_B)
+        puf.play_sfx(7)
+        menu_state += 1
+        if menu_state == MENU_STATE_DIFFICULTY && two_player_mode
+            menu_state += 1
+        enter_state_main_menu(menu_state)
+
+    if player == PLAYER_1 && menu_state != MENU_STATE_TYPE && pads[player].pressed & BUTTON_A
+        goto mode main()
+        : preserves
+
+fn fade_out_go_to_game()
+    puf.stop(0)
+    fade_out_black(FADE_PERIOD)
+    hide_oam(0)
+    goto mode air_hockey_game()
+    : preserves /game_settings
+
+fn set_palette_colors()
+    U p1_palette_start = U(player_menu_selection[PLAYER_1] * 3)
+    p1_color[0] = COLOR_PALETTES[p1_palette_start]
+    p1_color[1] = COLOR_PALETTES[p1_palette_start + 1]
+    p1_color[2] = COLOR_PALETTES[p1_palette_start + 2]
+    U p2_palette_start = U(player_menu_selection[PLAYER_2] * 3)
+    p2_color[0] = COLOR_PALETTES[p2_palette_start]
+    p2_color[1] = COLOR_PALETTES[p2_palette_start + 1]
+    p2_color[2] = COLOR_PALETTES[p2_palette_start + 2]
+
+// ============================================================================
+// TITLE ANIMATION AND RENDERING
+// ============================================================================
+fn update_main_menu()
+    rand()
+    update_pads()
+    switch menu_state
+        case MENU_STATE_TYPE case MENU_STATE_THEME case MENU_STATE_DIFFICULTY case MENU_STATE_SCORE_TO_WIN
+            handle_input_main_menu(PLAYER_1)
+            break
+        case MENU_STATE_COLOR
+            handle_input_main_menu(PLAYER_1)
+            if two_player_mode
+                handle_input_main_menu(PLAYER_2)
+            break
+    animate_logo()
+    update_sprite_main_menu()
+    update_attract_mode()
+
+fn update_attract_mode()
+    if menu_state == MENU_STATE_TYPE:
+        idle_attract_frame_counter += 1
+        if idle_attract_frame_counter == ONE_SECOND_FRAMES
+            idle_attract_frame_counter = 0
+            idle_attract_seconds_counter += 1
+            if idle_attract_seconds_counter == IDLE_SECONDS_BEFORE_ATTRACT
+                attract_mode = true
+                if theme < THEME_RETRO
+                    theme += 1
+                else
+                    theme = THEME_ARCADE
+                player_menu_selection[PLAYER_1] = randb(6)
+                player_menu_selection[PLAYER_2] = randb(6)
+                set_palette_colors()
+                hide_oam(0)
+                fade_out_go_to_game()
+    else
+        idle_attract_frame_counter = 0
+        idle_attract_seconds_counter = 0
+
+fn animate_logo()
+    if logo_puck.pos.x >= logo_rink_bounds.right_x || logo_puck.pos.x <= logo_rink_bounds.left_x
+        logo_puck.vel.x = -logo_puck.vel.x
+    if logo_puck.pos.y >= logo_rink_bounds.bottom_y || logo_puck.pos.y <= logo_rink_bounds.top_y
+        logo_puck.vel.y = -logo_puck.vel.y
+    if logo_mallet_1.pos.y >= logo_rink_bounds.bottom_y || logo_mallet_1.pos.y <= logo_rink_bounds.top_y
+        logo_mallet_1.vel.y = -logo_mallet_1.vel.y
+    if logo_mallet_2.pos.y >= logo_rink_bounds.bottom_y || logo_mallet_2.pos.y <= logo_rink_bounds.top_y
+        logo_mallet_2.vel.y = -logo_mallet_2.vel.y
+    logo_puck.pos.x += logo_puck.vel.x
+    logo_puck.pos.y += logo_puck.vel.y
+    logo_mallet_1.pos.x += logo_mallet_1.vel.x
+    logo_mallet_1.pos.y += logo_mallet_1.vel.y
+    logo_mallet_2.pos.x += logo_mallet_2.vel.x
+    logo_mallet_2.pos.y += logo_mallet_2.vel.y
+
+fn update_sprite_main_menu()
+    U o = 0
+    o = push_oam(o, logo_mallet_1.pos.x.a, logo_mallet_1.pos.y.a, logo_mallet_1.sprite, $00)
+    o = push_oam(o, logo_mallet_2.pos.x.a, logo_mallet_2.pos.y.a, logo_mallet_2.sprite, $01)
+    o = push_oam(o, logo_puck.pos.x.a, logo_puck.pos.y.a, logo_puck.sprite, $03)
+    o = push_oam(o, 75, 41, $B0, $02)
+    o = push_oam(o, 109, 41, $B0, $02 | ATTR_H_FLIP)
+    o = push_oam(o, 92, 41, $B1, $02)
+    o = push_oam(o, 92, 35, $B2, $02)
+    o = push_oam(o, 92, 48, $B2, $02)
+    o = push_oam_metasprite(o, 128, 222, @release_metasprite)
+    switch menu_state
+        case MENU_STATE_TYPE
+            o = push_oam_metasprite_a(
+                o,
+                MENU_X_POSITIONS[0],
+                MENU_Y_POSITIONS_2[player_menu_selection[PLAYER_1]],
+                @menu_mallet_metasprite,
+                $00
+                )
+            break
+        case MENU_STATE_THEME case MENU_STATE_DIFFICULTY
+            o = push_oam_metasprite_a(
+                o,
+                MENU_X_POSITIONS[0],
+                MENU_Y_POSITIONS_3[player_menu_selection[PLAYER_1]],
+                @menu_mallet_metasprite,
+                $00
+                )
+            break
+        case MENU_STATE_COLOR
+            o = push_oam_metasprite_a(
+                o,
+                MENU_X_POSITIONS[0],
+                MENU_Y_POSITIONS_6[player_menu_selection[PLAYER_1]],
+                @menu_mallet_metasprite,
+                $00
+                )
+            if two_player_mode
+                o = push_oam_metasprite_a(
+                    o,
+                    MENU_X_POSITIONS[1],
+                    MENU_Y_POSITIONS_6[player_menu_selection[PLAYER_2]],
+                    @menu_mallet_metasprite,
+                    $01
+                    )
+            else
+                o = push_oam_metasprite(
+                    o,
+                    MENU_X_POSITIONS[1],
+                    MENU_Y_POSITIONS_6[player_menu_selection[PLAYER_2]],
+                    @ai_metasprite
+                    )
+            break
+        case MENU_STATE_SCORE_TO_WIN
+            o = push_oam_metasprite_a(
+                o,
+                MENU_X_POSITIONS[0],
+                MENU_Y_POSITIONS_3[player_menu_selection[PLAYER_1]],
+                @menu_mallet_metasprite,
+                $00
+                )
+            break
+    hide_oam(o)
+
+// ============================================================================
+// NMI / VBLANK
+// ============================================================================
+nmi main_menu_nmi()
+    ppu_upload_oam_poll_pads(0)
+    if menu_state == MENU_STATE_COLOR
+        set_palette_colors()
+        palette[12] = p1_color[0]
+        palette[13] = p1_color[1]
+        palette[14] = p1_color[2]
+        palette[15] = p2_color[0]
+        palette[16] = p2_color[1]
+        palette[17] = p2_color[2]
+    ppu_upload_palette()
+    ppu_reset_scroll(ppu_scroll_x, 0)
+    if update_menu_graphics
+        write_vram_h(
+            MENU_LINE_ADDRESSES[menu_tiles_loop_counter],
+            U(menu_tiles_loop_counter * 8),
+            8,
+            MENU_LINE_DATA[menu_state]
+            )
+        menu_tiles_loop_counter += 1
+        if menu_tiles_loop_counter == 8
+            update_menu_graphics = false
+            menu_tiles_loop_counter = 0
+    if finished_loading
+        {PPUMASK}(PPUMASK_ON | PPUMASK_NO_CLIP)
+    else
+        {PPUMASK}(PPUMASK_BG_ON)
+    puf.process(PUF_DEFAULT)
+    {PPUCTRL}(PPUCTRL_NMI_ON | PPUCTRL_BG_PT_1000)
+
+// ============================================================================
+// MODE main() entry point
+// ============================================================================
+// Transitions here preserve no variable groups, so menu globals use their declared defaults.
+mode main()
+: nmi main_menu_nmi
+    init_main_menu()
+
+    while true
+        update_main_menu()
+        nmi

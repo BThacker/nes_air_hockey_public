@@ -1,0 +1,244 @@
+// air_hockey_physics.fab — movement and collision simulation
+// Author: Brandon Thacker
+// License: MIT
+
+// ============================================================================
+// RINK COLLISIONS
+// ============================================================================
+// The puck center may enter the mouth only after clearing both goal posts.
+fn puck_center_inside_goal_mouth() Bool
+    U puck_x = game_state.objects[PUCK].pos.x.a
+    return (
+        puck_x >= RINK_DIMENSIONS.left_net_x + PUCK_RADIUS
+        && puck_x <= RINK_DIMENSIONS.right_net_x - PUCK_RADIUS
+        )
+
+// The opening itself starts at the faces of the goal posts.
+fn puck_center_in_goal_opening() Bool
+    U puck_x = game_state.objects[PUCK].pos.x.a
+    return (
+        puck_x > RINK_DIMENSIONS.left_net_x
+        && puck_x < RINK_DIMENSIONS.right_net_x
+        )
+
+fn puck_in_top_goal_area() Bool
+    return (
+        game_state.objects[PUCK].pos.y.a
+        <= RINK_DIMENSIONS.top_y + GOAL_POST_ACTIVATION_OFFSET
+        )
+
+fn puck_in_bottom_goal_area() Bool
+    return (
+        game_state.objects[PUCK].pos.y.a
+        >= RINK_DIMENSIONS.bottom_y - GOAL_POST_ACTIVATION_OFFSET
+        )
+
+// Keep the puck inside the goal channel and reflect it from a post face.
+fn collide_puck_goal_posts()
+    if game_state.objects[PUCK].pos.x.a <= RINK_DIMENSIONS.left_net_x + PUCK_RADIUS
+        game_state.objects[PUCK].pos.x = RINK_DIMENSIONS.left_net_x + PUCK_RADIUS
+        if game_state.objects[PUCK].vel.x < 0
+            game_state.objects[PUCK].vel.x = -game_state.objects[PUCK].vel.x
+            puf.play_sfx(3)
+
+    if game_state.objects[PUCK].pos.x.a >= RINK_DIMENSIONS.right_net_x - PUCK_RADIUS
+        game_state.objects[PUCK].pos.x = RINK_DIMENSIONS.right_net_x - PUCK_RADIUS
+        if game_state.objects[PUCK].vel.x > 0
+            game_state.objects[PUCK].vel.x = -game_state.objects[PUCK].vel.x
+            puf.play_sfx(3)
+
+fn evaluate_puck_goal() U
+    if (
+        game_state.objects[PUCK].pos.y <= RINK_DIMENSIONS.top_y
+        && puck_center_inside_goal_mouth()
+        )
+        return PLAYER_1
+    if (
+        game_state.objects[PUCK].pos.y >= RINK_DIMENSIONS.bottom_y
+        && puck_center_inside_goal_mouth()
+        )
+        return PLAYER_2
+    return NONE
+
+fn collide_puck_rink()
+    if game_state.objects[PUCK].vel.x == 0 && game_state.objects[PUCK].vel.y == 0
+        return
+
+    if (
+        game_state.objects[PUCK].vel.x < 0
+        && is_colliding_rink(PUCK_RADIUS, PUCK, DIRECTION_LEFT)
+    )
+        game_state.objects[PUCK].pos.x = RINK_DIMENSIONS.left_x + PUCK_RADIUS + 1
+        game_state.objects[PUCK].vel.x = -game_state.objects[PUCK].vel.x
+        puf.play_sfx(3)
+
+    if (
+        game_state.objects[PUCK].vel.x > 0
+        && is_colliding_rink(PUCK_RADIUS, PUCK, DIRECTION_RIGHT)
+    )
+        game_state.objects[PUCK].pos.x = RINK_DIMENSIONS.right_x - PUCK_RADIUS - 1
+        game_state.objects[PUCK].vel.x = -game_state.objects[PUCK].vel.x
+        puf.play_sfx(3)
+
+    Bool puck_in_top_goal_channel = (
+        puck_in_top_goal_area()
+        && puck_center_in_goal_opening()
+        )
+    Bool puck_in_bottom_goal_channel = (
+        puck_in_bottom_goal_area()
+        && puck_center_in_goal_opening()
+        )
+
+    // Goal-post walls apply to all motion inside either goal channel.
+    if puck_in_top_goal_channel || puck_in_bottom_goal_channel
+        collide_puck_goal_posts()
+
+    if game_state.objects[PUCK].vel.y < 0
+        if !puck_in_top_goal_channel && is_colliding_rink(PUCK_RADIUS, PUCK, DIRECTION_UP)
+            game_state.objects[PUCK].pos.y = RINK_DIMENSIONS.top_y + PUCK_RADIUS + 1
+            game_state.objects[PUCK].vel.y = -game_state.objects[PUCK].vel.y
+            puf.play_sfx(3)
+
+    if game_state.objects[PUCK].vel.y > 0
+        if !puck_in_bottom_goal_channel && is_colliding_rink(PUCK_RADIUS, PUCK, DIRECTION_DOWN)
+            game_state.objects[PUCK].pos.y = RINK_DIMENSIONS.bottom_y - PUCK_RADIUS - 1
+            game_state.objects[PUCK].vel.y = -game_state.objects[PUCK].vel.y
+            puf.play_sfx(3)
+
+// Correct any puck position pushed through a boundary by mallet separation.
+// Unlike normal movement collisions, these tests do not depend on velocity.
+fn contain_puck_in_rink()
+    if game_state.objects[PUCK].pos.x.a < RINK_DIMENSIONS.left_x + PUCK_RADIUS
+        game_state.objects[PUCK].pos.x = RINK_DIMENSIONS.left_x + PUCK_RADIUS + 1
+        if game_state.objects[PUCK].vel.x < 0
+            game_state.objects[PUCK].vel.x = -game_state.objects[PUCK].vel.x
+
+    if game_state.objects[PUCK].pos.x.a > RINK_DIMENSIONS.right_x - PUCK_RADIUS
+        game_state.objects[PUCK].pos.x = RINK_DIMENSIONS.right_x - PUCK_RADIUS - 1
+        if game_state.objects[PUCK].vel.x > 0
+            game_state.objects[PUCK].vel.x = -game_state.objects[PUCK].vel.x
+
+    if puck_in_top_goal_area() && puck_center_in_goal_opening()
+        collide_puck_goal_posts()
+    else if game_state.objects[PUCK].pos.y.a < RINK_DIMENSIONS.top_y + PUCK_RADIUS
+        game_state.objects[PUCK].pos.y = RINK_DIMENSIONS.top_y + PUCK_RADIUS + 1
+        if game_state.objects[PUCK].vel.y < 0
+            game_state.objects[PUCK].vel.y = -game_state.objects[PUCK].vel.y
+
+    if puck_in_bottom_goal_area() && puck_center_in_goal_opening()
+        collide_puck_goal_posts()
+    else if game_state.objects[PUCK].pos.y.a > RINK_DIMENSIONS.bottom_y - PUCK_RADIUS
+        game_state.objects[PUCK].pos.y = RINK_DIMENSIONS.bottom_y - PUCK_RADIUS - 1
+        if game_state.objects[PUCK].vel.y > 0
+            game_state.objects[PUCK].vel.y = -game_state.objects[PUCK].vel.y
+
+fn is_colliding_rink(U rad, U object_idx, U direction) Bool
+    switch direction
+        case DIRECTION_LEFT
+            if game_state.objects[object_idx].pos.x.a - rad < RINK_DIMENSIONS.left_x
+                return true
+            break
+        case DIRECTION_RIGHT
+            if game_state.objects[object_idx].pos.x.a + rad > RINK_DIMENSIONS.right_x
+                return true
+            break
+        case DIRECTION_UP
+            if game_state.objects[object_idx].pos.y.a - rad < RINK_DIMENSIONS.top_y
+                return true
+            break
+        case DIRECTION_DOWN
+            if game_state.objects[object_idx].pos.y.a + rad > RINK_DIMENSIONS.bottom_y
+                return true
+            break
+        case DIRECTION_UP_CENTER
+            if game_state.objects[object_idx].pos.y.a - rad < RINK_DIMENSIONS.center_y
+                return true
+            break
+        case DIRECTION_DOWN_CENTER
+            if game_state.objects[object_idx].pos.y.a + rad > RINK_DIMENSIONS.center_y
+                return true
+            break
+    return false
+
+// ============================================================================
+// MALLET COLLISIONS
+// ============================================================================
+fn collide_puck_mallet(U idx)
+    S dx = S(game_state.objects[PUCK].pos.x.a - game_state.objects[idx].pos.x.a)
+    S dy = S(game_state.objects[PUCK].pos.y.a - game_state.objects[idx].pos.y.a)
+
+    if abs(dx) >= MALLET_DIAMETER || abs(dy) >= MALLET_DIAMETER
+        game_state.mallet_touching_puck[idx] = false
+        return
+
+    UU distance_squared = UU(dx*dx + dy*dy)
+    if distance_squared >= COLLISION_THRESHOLD
+        game_state.mallet_touching_puck[idx] = false
+        return
+
+    // Keep AI hit counting to one event per contact, but resolve impact on
+    // every overlapping physics tick for the original collision response.
+    if (
+        !game_state.mallet_touching_puck[idx]
+        && ((idx == PLAYER_2 && !two_player_mode) || attract_mode)
+        )
+        drone_states[idx].hit_counter += 1
+    game_state.mallet_touching_puck[idx] = true
+
+    game_state.objects[idx].cooldown_timer = MALLET_COOLDOWN_TIMER
+
+    // Normal vector.
+    SF nx = SF(dx) >> 3
+    SF ny = SF(dy) >> 3
+
+    SF a_dot = SF(nx*game_state.objects[idx].vel.x + ny*game_state.objects[idx].vel.y)
+    SF b_dot = SF(nx*game_state.objects[PUCK].vel.x + ny*game_state.objects[PUCK].vel.y)
+    SF impulse = 0.0
+    if game_state.objects[idx].boosting
+        impulse = SF((a_dot - b_dot) * 2.0)
+    else
+        impulse = a_dot - b_dot
+
+    SF wx = SF(impulse*nx)
+    SF wy = SF(impulse*ny)
+
+    game_state.objects[PUCK].vel.x += wx
+    game_state.objects[PUCK].vel.y += wy
+
+    // Shift the puck out of the mallet to avoid repeated overlap.
+    game_state.objects[PUCK].pos.x += nx << 1
+    game_state.objects[PUCK].pos.y += ny << 1
+    contain_puck_in_rink()
+
+    U total_velocity = abs(game_state.objects[PUCK].vel.x.a) + abs(game_state.objects[PUCK].vel.y.a)
+    total_puck_velocity = total_velocity
+    if total_velocity >= 3
+        puf.play_sfx(2)
+    else if total_velocity >= 1.5
+        puf.play_sfx(1)
+    else
+        puf.play_sfx(0)
+
+    if idx != game_state.last_hit_puck_player
+        game_state.last_hit_puck_player = idx
+        game_state.last_hit_puck_counter = 0
+        game_state.last_hit_puck_position = Vector2U(
+            game_state.objects[PUCK].pos.x.a, game_state.objects[PUCK].pos.y.a
+        )
+    else
+        game_state.last_hit_puck_counter += 1
+
+// ============================================================================
+// MOVEMENT
+// ============================================================================
+fn apply_object_movement(U idx)
+    game_state.objects[idx].vel.x = clamp_sf(game_state.objects[idx].vel.x, -1.0, 1.0)
+    game_state.objects[idx].vel.y = clamp_sf(game_state.objects[idx].vel.y, -1.0, 1.0)
+
+    game_state.objects[idx].pos.x += game_state.objects[idx].vel.x
+    game_state.objects[idx].pos.y += game_state.objects[idx].vel.y
+
+// Friction is applied once per rendered frame.
+fn apply_friction_puck()
+    game_state.objects[PUCK].vel.x *= FRICTION
+    game_state.objects[PUCK].vel.y *= FRICTION
