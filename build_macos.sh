@@ -18,7 +18,7 @@ case "${1:-}" in
 esac
 
 rm -f "$rom_name"
-wine ./nesfab/nesfab_legal.exe "${compiler_args[@]}"
+wine ./nesfab/nesfab.exe "${compiler_args[@]}"
 
 if [ ! -f "$rom_name" ]; then
     echo "Build failed - $rom_name not found"

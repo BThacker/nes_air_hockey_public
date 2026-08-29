@@ -88,6 +88,19 @@ fn reset_round(U serving_player)
     game_state.last_hit_puck_position = Vector2U(0, 0)
     game_state.last_hit_puck_counter = 0
     game_state.last_hit_puck_player = NONE
+    // A new serve must not inherit an AI's start delay from the prior rally.
+    drone_states[PLAYER_1].can_start_counter = 0
+    drone_states[PLAYER_2].can_start_counter = 0
+    if attract_mode
+        // Both drones wait briefly on every attract-mode serve.
+        drone_states[PLAYER_1].can_start_counter = rand_range(
+            ONE_SECOND_FRAMES,
+            THREE_SECONDS_FRAMES
+            )
+        drone_states[PLAYER_2].can_start_counter = rand_range(
+            ONE_SECOND_FRAMES,
+            THREE_SECONDS_FRAMES
+            )
     U random_x = rand_range(
         RINK_DIMENSIONS.left_x + 8,
         RINK_DIMENSIONS.right_x - 8
@@ -95,13 +108,8 @@ fn reset_round(U serving_player)
 
     switch serving_player
         case PLAYER_1 // puck starts on player 2's side
-            if !two_player_mode || attract_mode
+            if !two_player_mode && !attract_mode
                 drone_states[PLAYER_2].can_start_counter = rand_range(
-                    ONE_SECOND_FRAMES,
-                    THREE_SECONDS_FRAMES
-                    )
-            if attract_mode
-                drone_states[PLAYER_1].can_start_counter = rand_range(
                     ONE_SECOND_FRAMES,
                     THREE_SECONDS_FRAMES
                     )
