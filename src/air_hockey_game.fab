@@ -23,23 +23,9 @@ vars /game_settings
 // ============================================================================
 // INIT
 // ============================================================================
-fn set_attract_prompt(Bool visible)
-    if !attract_mode
-        return
-
-    if visible
-        write_vram_h(ATTRACT_DEMO_ADDR, 0, 4, @ATTRACT_DEMO_TILES)
-        write_vram_h(ATTRACT_PRESS_ADDR, 0, 5, @ATTRACT_PRESS_TILES)
-        write_vram_h(ATTRACT_START_ADDR, 0, 5, @ATTRACT_START_TILES)
-    else
-        write_vram_h(ATTRACT_DEMO_ADDR, 0, 4, @ATTRACT_BLANK_TILES)
-        write_vram_h(ATTRACT_PRESS_ADDR, 0, 5, @ATTRACT_BLANK_TILES)
-        write_vram_h(ATTRACT_START_ADDR, 0, 5, @ATTRACT_BLANK_TILES)
-
 fn init_attract_prompt()
     attract_prompt_counter = 0
     attract_prompt_visible = true
-    set_attract_prompt(attract_prompt_visible)
 
 fn update_attract_prompt()
     if !attract_mode
@@ -51,7 +37,6 @@ fn update_attract_prompt()
 
     attract_prompt_counter = 0
     attract_prompt_visible = !attract_prompt_visible
-    set_attract_prompt(attract_prompt_visible)
 
 fn init_theme()
     ppu_reset_addr($2000)
@@ -100,6 +85,9 @@ fn reset_round(U serving_player)
     game_state.objects[PLAYER_2].pos = MALLET_P2_START
     game_state.mallet_touching_puck[PLAYER_1] = false
     game_state.mallet_touching_puck[PLAYER_2] = false
+    game_state.last_hit_puck_position = Vector2U(0, 0)
+    game_state.last_hit_puck_counter = 0
+    game_state.last_hit_puck_player = NONE
     U random_x = rand_range(
         RINK_DIMENSIONS.left_x + 8,
         RINK_DIMENSIONS.right_x - 8
@@ -223,15 +211,11 @@ fn handle_mallet_input(U idx)
 // ============================================================================
 // GAME LOOP FUNCTIONS
 // ============================================================================
-// Returns the player who scored, or NONE.
-fn evaluate_player_scored() U
-    if game_state.objects[PUCK].pos.y <= RINK_DIMENSIONS.top_y
+fn award_goal(U scorer)
+    if scorer == PLAYER_1
         game_state.player1_score += 1
-        return PLAYER_1
-    if game_state.objects[PUCK].pos.y >= RINK_DIMENSIONS.bottom_y
+    else if scorer == PLAYER_2
         game_state.player2_score += 1
-        return PLAYER_2
-    return NONE
 
 // Returns the winning player, or NONE.
 fn evaluate_game_over() U
@@ -281,7 +265,7 @@ fn show_game_over(U winner)
             break
     while true
         update_pads()
-        update_sprites_notify(@game_over_metasprite, 0)
+        update_sprites_notify(@game_over_metasprite, 0, false)
         if pads[0].pressed & BUTTON_B
             fade_out_black(FADE_PERIOD)
             hide_oam(0)
@@ -304,7 +288,7 @@ fn evaluate_attract_exit()
         fade_out_black(FADE_PERIOD)
         hide_oam(0)
         goto mode main()
-        :preserves
+        :preserves /game_settings
 
 // ============================================================================
 // SPECIAL EFFECTS
@@ -325,7 +309,7 @@ fn effect_scored_goal()
         {PPUMASK}(EMPHASIS_BITS[current_bit_emphasis] | PPUMASK_ON)
         fence
         U existing_o = show_replay(i)
-        update_sprites_notify(@goal_metasprite, existing_o)
+        update_sprites_notify(@goal_metasprite, existing_o, true)
         nmi
     change_object_palette(false)
 
@@ -392,11 +376,20 @@ fn update_sprites_gameplay()
         )
     o = push_oam(
         o,
-            SCORE_TO_WIN_POS.x,
-            SCORE_TO_WIN_POS.y,
-            score_to_win + NUMBER_SPRITES_START,
-            $02
+        SCORE_TO_WIN_POS.x,
+        SCORE_TO_WIN_POS.y,
+        score_to_win + NUMBER_SPRITES_START,
+        $02
         )
+
+    // Insert before the scrolling stars so the attract label wins crowded rows.
+    if attract_mode && attract_prompt_visible
+        o = push_oam_metasprite(
+            o,
+            ATTRACT_DEMO_POS.x,
+            ATTRACT_DEMO_POS.y,
+            @demo_metasprite
+            )
 
     if theme == THEME_SPACE // space theme
         o = update_sprites_space_bg(o)
@@ -412,10 +405,19 @@ fn update_sprites_gameplay()
     if o
         hide_oam(o)
 
-fn update_sprites_notify(PPP/sprites metaspr, U existing_o)
+fn update_sprites_notify(PPP/sprites metaspr, U existing_o, Bool replay_score_palette)
     U o = 0
     if existing_o
         o = existing_o
+
+    U score_palette_1 = $00
+    U score_palette_2 = $01
+    U score_to_win_palette = $02
+    if replay_score_palette
+        score_palette_1 = $03
+        score_palette_2 = $03
+        score_to_win_palette = $03
+
     o = push_oam_metasprite(
         o,
         NOTIFY_SPRITE_POS.x ,
@@ -427,7 +429,7 @@ fn update_sprites_notify(PPP/sprites metaspr, U existing_o)
         SCORE_1_POS.x,
         SCORE_1_POS.y,
         game_state.player1_score + NUMBER_SPRITES_START,
-        $00
+        score_palette_1
         )
 
     o = push_oam(
@@ -435,14 +437,14 @@ fn update_sprites_notify(PPP/sprites metaspr, U existing_o)
         SCORE_2_POS.x,
         SCORE_2_POS.y,
         game_state.player2_score + NUMBER_SPRITES_START,
-        $01
+        score_palette_2
         )
     o = push_oam(
         o,
         SCORE_TO_WIN_POS.x,
         SCORE_TO_WIN_POS.y,
         score_to_win + NUMBER_SPRITES_START,
-        $02
+        score_to_win_palette
         )
     if theme == THEME_ARCADE
         o = push_oam_metasprite(
@@ -501,7 +503,7 @@ mode air_hockey_game()
         evaluate_pause()
         if game_state.paused
             effect_paused()
-            update_sprites_notify(@paused_metasprite, 0)
+            update_sprites_notify(@paused_metasprite, 0, false)
             nmi
             continue
 
@@ -509,26 +511,11 @@ mode air_hockey_game()
         if debug_mode
             handle_debug_input()
 
-        U scored = evaluate_player_scored()
-        switch scored
-            case PLAYER_1 case PLAYER_2
-                puf.play_sfx(3)
-                puf.play_sfx(4)
-                effect_scored_goal()
-                reset_round(scored)
-                break
-
-        U game_over = evaluate_game_over()
-        switch game_over
-            case PLAYER_1 case PLAYER_2
-                show_game_over(game_over)
-                continue
-
         U stuck_puck = evaluate_stuck_puck()
         switch stuck_puck
             case PLAYER_1 case PLAYER_2
                 puf.play_sfx(5)
-                update_sprites_notify(@trap_metasprite, 0)
+                update_sprites_notify(@trap_metasprite, 0, false)
                 wait(ONE_SECOND_FRAMES)
                 reset_round(stuck_puck)
                 break
@@ -546,6 +533,7 @@ mode air_hockey_game()
             else
                 handle_drone_mallet(PLAYER_2)
 
+        U scored = NONE
         for U pt = 0; pt < PHYSICS_TICKS; pt += 1
             if (
                 game_state.objects[PLAYER_1].pos.y.a
@@ -564,6 +552,24 @@ mode air_hockey_game()
                 apply_object_movement(PLAYER_2)
             update_replay_system() // Record every physics tick for slow motion.
             apply_object_movement(PUCK)
+            scored = evaluate_puck_goal()
+            if scored != NONE
+                break
+
+        switch scored
+            case PLAYER_1 case PLAYER_2
+                award_goal(scored)
+                puf.play_sfx(3)
+                puf.play_sfx(4)
+                effect_scored_goal()
+                reset_round(scored)
+                break
+
+        U game_over = evaluate_game_over()
+        switch game_over
+            case PLAYER_1 case PLAYER_2
+                show_game_over(game_over)
+                continue
 
         // Apply friction every other frame to preserve the puck's glide.
         game_state.friction_counter += 1

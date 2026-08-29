@@ -155,14 +155,21 @@ data /sprites
         (make_metasprite(0, Ms{}(
             Ms(-4, -4, $60, $02))))
 
-    // Title-screen release identifier: REV 1A.
+    // Title-screen release identifier: REV1A.
     [] release_metasprite
         (make_metasprite(0, Ms{}(
             Ms(-20, 0, "R"spr[0], $02),
             Ms(-12, 0, "E"spr[0], $02),
             Ms( -4, 0, "V"spr[0], $02),
-            Ms( 12, 0, "1"spr[0], $02),
-            Ms( 20, 0, "A"spr[0], $02))))
+            Ms(  4, 0, "1"spr[0], $02),
+            Ms( 12, 0, "A"spr[0], $02))))
+
+    [] demo_metasprite
+        (make_metasprite(0, Ms{}(
+            Ms(-16, 0, "D"spr[0], $02),
+            Ms( -8, 0, "E"spr[0], $02),
+            Ms(  0, 0, "M"spr[0], $02),
+            Ms(  8, 0, "O"spr[0], $02))))
 
     [] paused_metasprite
         (make_metasprite(0, Ms{}(
@@ -253,16 +260,6 @@ data /sprites
 // MENU DATA
 // ============================================================================
 data /menu_data
-    // Attract-mode prompt, kept outside the rink so it does not obscure play.
-    [] ATTRACT_DEMO_TILES
-        U[]('D', 'E', 'M', 'O')
-    [] ATTRACT_PRESS_TILES
-        U[]('P', 'R', 'E', 'S', 'S')
-    [] ATTRACT_START_TILES
-        U[]('S', 'T', 'A', 'R', 'T')
-    [] ATTRACT_BLANK_TILES
-        U[](' ', ' ', ' ', ' ', ' ')
-
     // Player-selection screen text.
     [] PLAYER_SELECT_TILES
         U[](

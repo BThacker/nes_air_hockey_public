@@ -59,5 +59,5 @@ fn update_sprites_space_bg(U index) U
 
 fn scroll_space_bg()
     for U i = 0; i < 16; i += 1
-        far_stars[i].pos.x -= 0.01
-        close_stars[i].pos.x -= 0.10
+        far_stars[i].pos.x += far_stars[i].vel.x
+        close_stars[i].pos.x += close_stars[i].vel.x

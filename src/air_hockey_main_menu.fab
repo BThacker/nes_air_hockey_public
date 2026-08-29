@@ -34,6 +34,10 @@ fn scroll_title()
 fn init_main_menu()
     {PPUCTRL}(0)
     {PPUMASK}(0)
+    // OAM is undefined after a hardware reset; blank it before the first DMA.
+    hide_oam(0)
+    // Attract mode preserves game settings so its next theme can be selected.
+    attract_mode = false
     ppu_reset_scroll(ppu_scroll_x, 0)
     load_palette(@main_menu_palette)
     {PPUSTATUS}()
@@ -68,7 +72,7 @@ fn enter_state_main_menu(U new_state)
             menu_max = 5
             player_menu_selection[PLAYER_1] = 0
             if !two_player_mode
-                player_menu_selection[PLAYER_2] = randb(5)
+                player_menu_selection[PLAYER_2] = randb(6)
             break
         case MENU_STATE_DIFFICULTY
             menu_max = 2
@@ -153,7 +157,10 @@ fn update_attract_mode()
             idle_attract_seconds_counter += 1
             if idle_attract_seconds_counter == IDLE_SECONDS_BEFORE_ATTRACT
                 attract_mode = true
-                theme = randb(3)
+                if theme < THEME_RETRO
+                    theme += 1
+                else
+                    theme = THEME_ARCADE
                 player_menu_selection[PLAYER_1] = randb(6)
                 player_menu_selection[PLAYER_2] = randb(6)
                 set_palette_colors()
@@ -189,7 +196,7 @@ fn update_sprite_main_menu()
     o = push_oam(o, 92, 41, $B1, $02)
     o = push_oam(o, 92, 35, $B2, $02)
     o = push_oam(o, 92, 48, $B2, $02)
-    o = push_oam_metasprite(o, 228, 212, @release_metasprite)
+    o = push_oam_metasprite(o, 128, 222, @release_metasprite)
     switch menu_state
         case MENU_STATE_TYPE
             o = push_oam_metasprite_a(

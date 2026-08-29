@@ -20,6 +20,7 @@
 - Preserve the current NESFab style and keep gameplay changes narrowly scoped.
 - Keep one empty line between top-level declarations, no empty line after section headings or leading comments, and no consecutive blank lines. Run `bash scripts/format_fab.sh --check` after formatting changes; use `--write` only to apply the repository formatter.
 - Use boxed uppercase headers only for major module sections. Comments should explain non-obvious intent, timing, hardware constraints, units, invariants, or side effects; avoid comments that merely restate the code.
+- The NESFab `palette` buffer has 25 entries (valid indices `0` through `24`): four background palettes, four sprite palettes, and the transparency color. Never write outside this range; out-of-bounds palette writes can corrupt unrelated rendering state.
 - Update `README.md` when changing player-facing controls, build requirements, or project setup.
 - Do not add NESFab executables, documentation, or examples under `nesfab/` to Git; they are locally supplied dependencies.
 - Before handing off code changes, run the relevant build when the required local NESFab toolchain is available. Otherwise, state that it was not run.

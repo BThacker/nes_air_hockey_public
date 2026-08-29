@@ -5,10 +5,18 @@
 // ============================================================================
 // DEBUG STATE
 // ============================================================================
+ct U DEBUG_GOAL_TEST_COUNT = 10
+ct U DEBUG_GOAL_TEST_DISTANCE = 24
+ct SF DEBUG_GOAL_TEST_VERTICAL_SPEED = 0.25
+ct SF DEBUG_GOAL_TEST_HORIZONTAL_SPEED = 0.0625
+ct SF DEBUG_GOAL_TEST_LATERAL_SPEED = 0.5
+ct SF DEBUG_GOAL_TEST_DIAGONAL_SPEED = 0.015625
+
 vars /debug
     Bool debug_mode = false
     U debug_toggle_performance_gray_line_counter = 0
     U debug_reset_game_counter = 0
+    U debug_goal_test_index = 0
     Bool debug_gray_line_on = false
     U puck_x
     U puck_y
@@ -21,7 +29,122 @@ vars /debug
 // ============================================================================
 // DEBUG FUNCTIONS
 // ============================================================================
+// Run one deterministic goal-geometry scenario, then advance to the next.
+// Tests: post glances, outside-mouth rebounds, and lateral goal-channel sweeps.
+fn run_goal_test(U test)
+    U top_test_y = RINK_DIMENSIONS.top_y + PUCK_RADIUS + DEBUG_GOAL_TEST_DISTANCE
+    U bottom_test_y = RINK_DIMENSIONS.bottom_y - PUCK_RADIUS - DEBUG_GOAL_TEST_DISTANCE
+    Vector2UF off_board_position = Vector2UF(0, 255)
+    Vector2UF puck_position = Vector2UF(
+        RINK_DIMENSIONS.left_net_x + PUCK_RADIUS + 6,
+        top_test_y
+        )
+    Vector2SF puck_velocity = Vector2SF(
+        -DEBUG_GOAL_TEST_HORIZONTAL_SPEED,
+        -DEBUG_GOAL_TEST_VERTICAL_SPEED
+        )
+
+    switch test
+        case 0 // Top left post: should reflect right and score.
+            break
+        case 1 // Top right post: should reflect left and score.
+            puck_position = Vector2UF(
+                RINK_DIMENSIONS.right_net_x - PUCK_RADIUS - 4,
+                top_test_y
+                )
+            puck_velocity = Vector2SF(
+                DEBUG_GOAL_TEST_HORIZONTAL_SPEED,
+                -DEBUG_GOAL_TEST_VERTICAL_SPEED
+                )
+            break
+        case 2 // Bottom left post: should reflect right and score.
+            puck_position = Vector2UF(
+                RINK_DIMENSIONS.left_net_x + PUCK_RADIUS + 6,
+                bottom_test_y
+                )
+            puck_velocity = Vector2SF(
+                -DEBUG_GOAL_TEST_HORIZONTAL_SPEED,
+                DEBUG_GOAL_TEST_VERTICAL_SPEED
+                )
+            break
+        case 3 // Bottom right post: should reflect left and score.
+            puck_position = Vector2UF(
+                RINK_DIMENSIONS.right_net_x - PUCK_RADIUS - 4,
+                bottom_test_y
+                )
+            puck_velocity = Vector2SF(
+                DEBUG_GOAL_TEST_HORIZONTAL_SPEED,
+                DEBUG_GOAL_TEST_VERTICAL_SPEED
+                )
+            break
+        case 4 // Top outside left: should rebound from the rink wall.
+            puck_position = Vector2UF(RINK_DIMENSIONS.left_net_x - 1, top_test_y)
+            puck_velocity = Vector2SF(0, -DEBUG_GOAL_TEST_VERTICAL_SPEED)
+            break
+        case 5 // Bottom outside right: should rebound from the rink wall.
+            puck_position = Vector2UF(RINK_DIMENSIONS.right_net_x + 1, bottom_test_y)
+            puck_velocity = Vector2SF(0, DEBUG_GOAL_TEST_VERTICAL_SPEED)
+            break
+        case 6 // Top lateral sweep: should reflect from both goal posts.
+            puck_position = Vector2UF(
+                RINK_DIMENSIONS.right_net_x + 6,
+                RINK_DIMENSIONS.top_y + GOAL_POST_ACTIVATION_OFFSET
+                )
+            puck_velocity = Vector2SF(-DEBUG_GOAL_TEST_LATERAL_SPEED, 0)
+            break
+        case 7 // Bottom lateral sweep: should reflect from both goal posts.
+            puck_position = Vector2UF(
+                RINK_DIMENSIONS.right_net_x + 6,
+                RINK_DIMENSIONS.bottom_y - GOAL_POST_ACTIVATION_OFFSET
+                )
+            puck_velocity = Vector2SF(-DEBUG_GOAL_TEST_LATERAL_SPEED, 0)
+            break
+        case 8 // Top diagonal sweep: should hit the left post before scoring.
+            puck_position = Vector2UF(
+                RINK_DIMENSIONS.right_net_x + 6,
+                RINK_DIMENSIONS.top_y + GOAL_POST_ACTIVATION_OFFSET
+                )
+            puck_velocity = Vector2SF(
+                -DEBUG_GOAL_TEST_HORIZONTAL_SPEED,
+                -DEBUG_GOAL_TEST_DIAGONAL_SPEED
+                )
+            break
+        case 9 // Bottom diagonal sweep: should hit the left post before scoring.
+            puck_position = Vector2UF(
+                RINK_DIMENSIONS.right_net_x + 6,
+                RINK_DIMENSIONS.bottom_y - GOAL_POST_ACTIVATION_OFFSET
+                )
+            puck_velocity = Vector2SF(
+                -DEBUG_GOAL_TEST_HORIZONTAL_SPEED,
+                DEBUG_GOAL_TEST_DIAGONAL_SPEED
+                )
+            break
+
+    game_state.objects[PUCK].pos = puck_position
+    game_state.objects[PUCK].vel = puck_velocity
+    game_state.objects[PLAYER_1].pos = off_board_position
+    game_state.objects[PLAYER_1].vel = VEL_ZERO
+    game_state.objects[PLAYER_1].boosting = false
+    game_state.objects[PLAYER_1].cooldown_timer = 0
+    game_state.objects[PLAYER_2].pos = off_board_position
+    game_state.objects[PLAYER_2].vel = VEL_ZERO
+    game_state.objects[PLAYER_2].boosting = false
+    game_state.objects[PLAYER_2].cooldown_timer = 0
+    game_state.mallet_touching_puck[PLAYER_1] = false
+    game_state.mallet_touching_puck[PLAYER_2] = false
+    game_state.player1_score = 0
+    game_state.player2_score = 0
+    game_state.last_hit_puck_counter = 0
+    game_state.last_hit_puck_player = NONE
+
 fn handle_debug_input()
+    if pads[0].held & BUTTON_SELECT && pads[0].pressed & BUTTON_B
+        run_goal_test(debug_goal_test_index)
+        debug_goal_test_index += 1
+        if debug_goal_test_index == DEBUG_GOAL_TEST_COUNT
+            debug_goal_test_index = 0
+        return
+
     if pads[0].held & BUTTON_SELECT && pads[0].held & BUTTON_A
         debug_toggle_performance_gray_line_counter += 1
         if debug_toggle_performance_gray_line_counter == THREE_SECONDS_FRAMES
@@ -31,11 +154,11 @@ fn handle_debug_input()
         debug_toggle_performance_gray_line_counter = 0
 
     if pads[0].held & BUTTON_SELECT && pads[0].held & BUTTON_START
-            debug_reset_game_counter += 1
-            if debug_reset_game_counter == THREE_SECONDS_FRAMES
-                debug_reset_game_counter = 0
-                goto mode main()
-                : preserves // we preserve these to init the game
+        debug_reset_game_counter += 1
+        if debug_reset_game_counter == THREE_SECONDS_FRAMES
+            debug_reset_game_counter = 0
+            goto mode main()
+            : preserves // Return to a clean title screen.
 
     if pads[0].held & BUTTON_SELECT && pads[0].held & BUTTON_RIGHT
         game_state.objects[PUCK].pos.x.a += 1
@@ -45,8 +168,6 @@ fn handle_debug_input()
         game_state.objects[PUCK].pos.y.a -= 1
     if pads[0].held & BUTTON_SELECT && pads[0].held & BUTTON_DOWN
         game_state.objects[PUCK].pos.y.a += 1
-    if pads[0].held & BUTTON_SELECT && pads[0].held & BUTTON_B
-        game_state.objects[PUCK].vel.y = 1
     if pads[0].held & BUTTON_SELECT && pads[0].held & BUTTON_A
         game_state.objects[PUCK].vel.y = -1
 

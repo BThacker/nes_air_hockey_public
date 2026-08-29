@@ -3,27 +3,24 @@
 // License: MIT
 
 // ============================================================================
-// ============================================================================
 // TIMING & FRAME RATE
 // ============================================================================
 ct U ONE_SECOND_FRAMES = 60              // 60 fps
 ct U THREE_SECONDS_FRAMES = 180          // 3 seconds at 60 fps
 ct U TWO_SECONDS_FRAMES = 120            // 2 seconds
 ct U FADE_PERIOD = 8                     // visual effects timing
-ct U IDLE_SECONDS_BEFORE_ATTRACT = 10  // Idle seconds before attract mode begins.
+ct U IDLE_SECONDS_BEFORE_ATTRACT = 3     // Idle seconds before attract mode begins.
 
 // ============================================================================
 // CORE GAME CONFIGURATION
 // ============================================================================
 ct U DEFAULT_SCORE_TO_WIN = 7            // Standard air hockey rules.
 ct U[3] SCORE_TO_WIN_OPTIONS = U[3](3, 5, 7)
-ct U STUCK_PUCK_HIT_MAX = 25             // Repeated nearby hits indicate a trapped puck.
+ct U STUCK_PUCK_HIT_MAX = 15             // Repeated nearby hits indicate a trapped puck.
 ct U STUCK_PUCK_HIT_DISTANCE = 10
 
-// Attract-mode background label positions in the rink side margins.
-ct UU ATTRACT_DEMO_ADDR = $21C1
-ct UU ATTRACT_PRESS_ADDR = $21B9
-ct UU ATTRACT_START_ADDR = $21F9
+// Attract-mode status sprite near the bottom of the rink.
+ct Vector2U ATTRACT_DEMO_POS = Vector2U(128, 184)
 
 // ============================================================================
 // PHYSICS & SIMULATION
@@ -54,6 +51,7 @@ ct Int COLLISION_THRESHOLD = PUCK_DIAMETER * (MALLET_DIAMETER - 4) // Tuned for 
 ct UF MALLET_SPEED_NORMAL = 0.5
 ct UF MALLET_SPEED_BOOST = 1.0
 ct U MALLET_COOLDOWN_TIMER = 10          // Rendered frames between mallet hits.
+ct U GOAL_POST_ACTIVATION_OFFSET = 3     // Pixels before the center crosses a goal line.
 ct Vector2SF VEL_ZERO = Vector2SF(0, 0)
 
 // ============================================================================
@@ -64,8 +62,8 @@ ct RinkDimensions RINK_DIMENSIONS = RinkDimensions(
     184,  // right_x
     24,   // top_y
     216,  // bottom_y
-    107,  // left_net_x (tuned)
-    149,  // right_net_x (tuned)
+    105,  // left_net_x (tuned)
+    151,  // right_net_x (tuned)
     120,  // center_y
     128,  // center_x
     116,  // center_y_p2_collision_check
@@ -89,8 +87,8 @@ ct Vector2UF PUCK_START_P2 = Vector2UF(128, 80)      // Player 2 serve.
 // ============================================================================
 // SPACE THEME BACKGROUND EFFECTS
 // ============================================================================
-ct Vector2SF FAR_STAR_VEL = Vector2SF(0.20, 0.20)
-ct Vector2SF CLOSE_STAR_VEL = Vector2SF(0.50, 0.50)
+ct Vector2SF FAR_STAR_VEL = Vector2SF(-0.01, 0)
+ct Vector2SF CLOSE_STAR_VEL = Vector2SF(-0.10, 0)
 
 ct Vector2UF[16] FAR_STAR_POSITIONS = Vector2UF[16](
     Vector2UF(50, 30),
