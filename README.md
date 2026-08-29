@@ -1,6 +1,6 @@
 # Air Hockey - NES
 
-A fast-paced air hockey game for the Nintendo Entertainment System, written in [NESFab](https://pubby.games/nesfab.html). It targets original NROM-compatible NES hardware in the style of the original "black box" games.
+A fast-paced air hockey game for the Nintendo Entertainment System, written in [NESFab](https://pubby.games/nesfab.html). It targets NROM-compatible NES hardware in the style of the original "black box" games.
 
 [Download the ROM on itch.io](https://bthacker.itch.io/air-hockey-nes-black-box).
 
@@ -64,3 +64,4 @@ The game is licensed under the [MIT License](LICENSE). NESFab is GPL-3.0; its st
 - Programming, design, and game art: Brandon Thacker ([GitHub](https://github.com/bthacker))
 - Music and sound effects: [Grayson Solis](https://graysonsolis.com/)
 - Art consulting and cover art: [@grigoreen](https://www.instagram.com/grigoreen/)
+- Development assistance: OpenAI Codex
