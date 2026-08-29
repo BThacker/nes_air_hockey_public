@@ -6,3 +6,4 @@ nesfab/source1.8/
 *.mlb
 *.nes
 .vscode/settings.json
+.DS_Store

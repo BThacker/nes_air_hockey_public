@@ -89,8 +89,11 @@ fn update_drone_target(U player)
     Bool puck_moving_away_from_goal
 
     if player == PLAYER_2
-        // The top AI owns the center line so a stopped puck always has an attacker.
-        puck_on_ai_side = game_state.objects[PUCK].pos.y <= RINK_DIMENSIONS.center_y
+        // Both drones claim the center lane so either can contest a stopped puck.
+        puck_on_ai_side = (
+            game_state.objects[PUCK].pos.y
+            <= RINK_DIMENSIONS.center_y_p1_collision_check
+            )
         puck_approaching_goal = (
             game_state.objects[PUCK].vel.y < -0.1
             && game_state.objects[PUCK].pos.y < RINK_DIMENSIONS.center_y + 20
@@ -100,7 +103,10 @@ fn update_drone_target(U player)
             && game_state.objects[PUCK].pos.y < RINK_DIMENSIONS.center_y
             )
     else
-        puck_on_ai_side = game_state.objects[PUCK].pos.y > RINK_DIMENSIONS.center_y
+        puck_on_ai_side = (
+            game_state.objects[PUCK].pos.y
+            >= RINK_DIMENSIONS.center_y_p2_collision_check
+            )
         puck_approaching_goal = (
             game_state.objects[PUCK].vel.y > 0.1
             && game_state.objects[PUCK].pos.y > RINK_DIMENSIONS.center_y - 20
@@ -118,7 +124,13 @@ fn update_drone_target(U player)
         + abs(game_state.objects[player].pos.y.a - game_state.objects[PUCK].pos.y.a))
     Bool close_to_puck = distance_to_puck < AI_CLOSE_DISTANCE_THRESHOLDS[difficulty]
 
-    if puck_approaching_goal && !puck_slow_or_mostly_horizontal
+    // Only defend a puck that can actually enter the goal mouth. A puck
+    // outside it will reflect from the rink wall and should be contested.
+    if (
+        puck_approaching_goal
+        && puck_center_inside_goal_mouth()
+        && !puck_slow_or_mostly_horizontal
+    )
         execute_defensive_behavior(player)
     else if (
         puck_on_ai_side
