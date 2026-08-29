@@ -7,6 +7,9 @@ A fast-paced air hockey game for the Nintendo Entertainment System, written in [
 ## Screenshots
 ![Game Screenshot](marketing/cover_marketing.png)
 ![Game Screenshot](marketing/screenshot_1.png)
+![Color Selection Screenshot](marketing/screenshot_2.png)
+![Arcade Theme Screenshot](marketing/screenshot_3.png)
+![Space Theme Screenshot](marketing/screenshot_4.png)
 
 ## Features
 
